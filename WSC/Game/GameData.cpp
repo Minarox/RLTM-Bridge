@@ -234,7 +234,11 @@ void WSC::OnTick()
 
 void WSC::SendEntities(ServerWrapper server)
 {
+	// Monotonic time of the sample in milliseconds, only the difference between two updates is meaningful (interpolation)
+	const auto time = std::chrono::steady_clock::now().time_since_epoch();
+
 	json payload = json::object();
+	payload["time"] = std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
 	payload["balls"] = json::array();
 	payload["cars"] = json::array();
 

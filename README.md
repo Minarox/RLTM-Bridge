@@ -80,7 +80,7 @@ Every message sent to the server is a JSON object `{ "topic": "<topic>", "payloa
 - `match` - State of the match (arena, score, clock and flags)
 - `scoreboard` - Statistics of each player (score, goals, saves, etc. and the `events` counters received for the player, a missing event means 0)
 - `players` - Players of the match (uid, name, team, car)
-- `entities` - Balls and cars data (speed, location, boost, etc.), sent every `wsc_entities_interval` ms while the match is playing
+- `entities` - Balls and cars data (speed, location, boost, etc.), sent every `wsc_entities_interval` ms while the match is playing. Its `time` field is a monotonic time in milliseconds: use the difference between two updates to interpolate the positions
 - `statistic` - Statistic event of a player (goal, save, demolition, etc.)
 - `response` - Result of a command sent by the server (see below)
 
