@@ -129,6 +129,12 @@ Each command is answered on the `response` topic with `{ "command": "<name>", "i
 
 Only these commands can be executed: an invalid message or command is answered with an error and never reaches the game. `ping` and `resync` are always allowed, the other commands can be disabled by group in the settings.
 
+## 🧪 Tests
+
+- Unit tests of the messages format (no BakkesMod SDK needed): `sh tests/run.sh` (requires [nlohmann/json](https://github.com/nlohmann/json)), run by the CI on each push.
+- Test server to check the plugin without RLTM: `pip install websockets` then `python tools/test_server.py`, it shows the messages of the plugin and sends commands typed in the terminal.
+- In game: [docs/TEST-CHECKLIST.md](docs/TEST-CHECKLIST.md).
+
 ## 🔨 Build
 
 Open `WSC.sln` with Visual Studio 2022 and build the `Release | x64` configuration: the dependencies are installed by [vcpkg](https://vcpkg.io) (manifest mode) and the BakkesMod SDK is found from the BakkesMod installation.

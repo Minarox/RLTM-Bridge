@@ -28,7 +28,12 @@ void WSC::UpdateAdvancedStats(ServerWrapper server)
 	const double frameSeconds = std::min(std::chrono::duration<double>(now - match.lastStatsUpdate).count(), MAX_FRAME_SECONDS);
 	match.lastStatsUpdate = now;
 
-	const bool counting = match.inPlay && !match.replay;
+	// The cars of a goal replay replay their boost: nothing is counted
+	if (match.replay)
+	{
+		for (auto& [key, stats] : match.playerStats) stats.lastBoost = -1;
+		return;
+	}
 
 	for (PriWrapper player : server.GetPRIs())
 	{
@@ -54,7 +59,7 @@ void WSC::UpdateAdvancedStats(ServerWrapper server)
 		if (stats.lastBoost >= 0 && boost < stats.lastBoost) stats.boostUsed += stats.lastBoost - boost;
 		stats.lastBoost = boost;
 
-		if (!counting) continue;
+		if (!match.inPlay) continue;
 
 		stats.timeInPlay += frameSeconds;
 		stats.distance += car.GetVelocity().magnitude() * frameSeconds;
