@@ -30,6 +30,9 @@ void WSC::RegisterCvars()
 		.addOnValueChanged(onSocketSettingChanged);
 	persistentStorage->RegisterPersistentCvar(Cvars::PingInterval, "1", "Ping interval (seconds)", true, true, 1)
 		.addOnValueChanged(onSocketSettingChanged);
+	persistentStorage->RegisterPersistentCvar(Cvars::Debug, "0", "Log the messages sent to and received from the server (except the entities)", true, true, 0, true, 1)
+		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) { debug = cvar.getBoolValue(); });
+	debug = IsCvarEnabled(Cvars::Debug);
 
 	// Server control
 	persistentStorage->RegisterPersistentCvar(Cvars::ServerControl, "1", "Allow the server to send commands", true, true, 0, true, 1);

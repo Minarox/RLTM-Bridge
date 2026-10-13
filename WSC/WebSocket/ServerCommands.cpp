@@ -143,6 +143,8 @@ std::string WSC::BuildReplayName(const std::string& blue, const std::string& ora
 // Called from the ixwebsocket thread: only validate and queue the command
 void WSC::OnServerMessage(const std::string& message)
 {
+	if (debug) LOG("[debug] Received: {}", message.substr(0, 500));
+
 	ServerCommand command;
 	const std::string error = ParseCommand(message, command);
 	if (!error.empty())

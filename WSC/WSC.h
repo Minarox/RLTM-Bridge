@@ -42,6 +42,7 @@ namespace Cvars
 	inline constexpr const char* MaxWaitBetweenRetries = "wsc_max_wait_between_retries";
 	inline constexpr const char* PerMessageDeflate = "wsc_per_message_deflate";
 	inline constexpr const char* PingInterval = "wsc_ping_interval";
+	inline constexpr const char* Debug = "wsc_debug";
 
 	// Server control
 	inline constexpr const char* ServerControl = "wsc_server_control";
@@ -69,7 +70,7 @@ namespace Cvars
 
 	// Every cvar of the plugin (reset to the default values)
 	inline constexpr const char* All[] = {
-		Url, AutoConnect, AutoReconnect, HandshakeTimeout, MinWaitBetweenRetries, MaxWaitBetweenRetries, PerMessageDeflate, PingInterval,
+		Url, AutoConnect, AutoReconnect, HandshakeTimeout, MinWaitBetweenRetries, MaxWaitBetweenRetries, PerMessageDeflate, PingInterval, Debug,
 		ServerControl, ServerAllowCamera, ServerAllowActions, ServerAllowReplayName, ServerAllowSettings,
 		SendEntities, EntitiesInterval, SendSpectator,
 		AutoSpectate, HideHud, HudNames, HudMatchInfo, HideStatGraphs,
@@ -156,6 +157,7 @@ private:
 	std::mutex socketStatusMutex;
 	std::string socketLastError;
 	std::chrono::system_clock::time_point socketStatusSince = std::chrono::system_clock::now();
+	std::atomic<bool> debug = false; // Copy of the wsc_debug cvar, read from every thread
 	std::atomic<uint64_t> messagesSent = 0;
 	std::atomic<uint64_t> bytesSent = 0; // On the network, after compression
 	void InitSocket();

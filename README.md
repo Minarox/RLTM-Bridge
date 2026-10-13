@@ -61,6 +61,7 @@ The settings window is organized by feature: connection to the server, status (m
 | `wsc_min_wait_between_retries` | `500` | Minimum wait between reconnection retries (milliseconds) |
 | `wsc_max_wait_between_retries` | `500` | Maximum wait between reconnection retries (milliseconds) |
 | `wsc_per_message_deflate` | `1` | Compress the messages |
+| `wsc_debug` | `0` | Log the messages sent to and received from the server in the console (except the entities) |
 | **Data** | | |
 | `wsc_send_entities` | `1` | Send the balls and cars data (`entities`) |
 | `wsc_entities_interval` | `100` | Interval between two entities updates (16 to 1000 milliseconds) |

@@ -3,6 +3,9 @@
 
 namespace
 {
+	// Characters of a message written in the console in debug mode
+	constexpr size_t MAX_DEBUG_LOG_SIZE = 500;
+
 	const char* GetTopicName(Topic topic)
 	{
 		switch (topic)
@@ -139,7 +142,11 @@ void WSC::Send(Topic topic, const json& payload)
 
 	if (socket.getReadyState() != ix::ReadyState::Open) return;
 
-	CountSent(socket.send(Protocol::BuildMessage(topicName, payload)));
+	const std::string message = Protocol::BuildMessage(topicName, payload);
+	CountSent(socket.send(message));
+
+	// The entities are sent several times per second, they would flood the console
+	if (debug && topic != Topic::Entities) LOG("[debug] Sent: {}", message.substr(0, MAX_DEBUG_LOG_SIZE));
 }
 
 // Sends the current state of the game to the server, on (re)connection or when asked by the server
@@ -153,8 +160,14 @@ void WSC::ResendState()
 
 	if (socket.getReadyState() != ix::ReadyState::Open) return;
 
+	std::string topics;
 	for (auto& [topic, payload] : cache.items())
+	{
 		CountSent(socket.send(Protocol::BuildMessage(topic, payload)));
+		topics += (topics.empty() ? "" : ", ") + topic;
+	}
+
+	if (debug) LOG("[debug] State sent again: {}", topics);
 }
 
 // Statistics shown in the settings window

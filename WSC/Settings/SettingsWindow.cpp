@@ -195,6 +195,7 @@ void WSC::RenderWebSocketSettings()
 	RenderCvarInputInt("Ping interval (s)", Cvars::PingInterval, "Applied on the next connection");
 	RenderCvarInputInt("Min wait between retries (ms)", Cvars::MinWaitBetweenRetries, nullptr);
 	RenderCvarInputInt("Max wait between retries (ms)", Cvars::MaxWaitBetweenRetries, nullptr);
+	RenderCvarCheckbox("Debug mode", Cvars::Debug, "Log the messages sent to and received from the server in the BakkesMod console (F6), except the entities");
 }
 
 void WSC::RenderResetSettings()
