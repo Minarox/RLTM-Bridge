@@ -174,6 +174,23 @@ namespace Protocol
 		return sanitized.substr(first, sanitized.find_last_not_of(' ') - first + 1);
 	}
 
+	bool IsAllowedMonitorOrigin(const std::string& origin)
+	{
+		if (origin.empty() || origin == "null" || origin == MONITOR_SITE_ORIGIN) return true;
+
+		// Local page, with any port: http://localhost:8000, http://127.0.0.1:8000
+		for (const std::string host : { "http://localhost", "http://127.0.0.1" })
+		{
+			if (origin.compare(0, host.size(), host) != 0) continue;
+
+			const std::string rest = origin.substr(host.size());
+			if (rest.empty()) return true;
+			if (rest[0] == ':' && rest.size() > 1 && rest.find_first_not_of("0123456789", 1) == std::string::npos) return true;
+		}
+
+		return false;
+	}
+
 	std::string ToHexColor(float r, float g, float b)
 	{
 		auto component = [](float value) {

@@ -175,9 +175,15 @@ void RLTMBridge::Send(Topic topic, const json& payload)
 		cached = payload;
 	}
 
-	if (socket.getReadyState() != ix::ReadyState::Open) return;
+	// The monitor pages receive the messages even without a server
+	const bool connected = socket.getReadyState() == ix::ReadyState::Open;
+	const bool monitored = GetMonitorClientsCount() > 0;
+	if (!connected && !monitored) return;
 
 	const std::string message = Protocol::BuildMessage(topicName, payload);
+	if (monitored) BroadcastToMonitor(message);
+	if (!connected) return;
+
 	CountSent(socket.send(message));
 
 	// The entities are sent several times per second, they would flood the console
@@ -193,16 +199,18 @@ void RLTMBridge::ResendState()
 		cache = sentCache;
 	}
 
-	if (socket.getReadyState() != ix::ReadyState::Open) return;
-
+	const bool connected = socket.getReadyState() == ix::ReadyState::Open;
 	std::string topics;
+
 	for (auto& [topic, payload] : cache.items())
 	{
-		CountSent(socket.send(Protocol::BuildMessage(topic, payload)));
+		const std::string message = Protocol::BuildMessage(topic, payload);
+		BroadcastToMonitor(message);
+		if (connected) CountSent(socket.send(message));
 		topics += (topics.empty() ? "" : ", ") + topic;
 	}
 
-	if (debug) LOG("[debug] State sent again: {}", topics);
+	if (debug && connected) LOG("[debug] State sent again: {}", topics);
 }
 
 // Statistics shown in the settings window

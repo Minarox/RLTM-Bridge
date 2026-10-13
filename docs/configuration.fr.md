@@ -14,6 +14,7 @@ Les réglages sont enregistrés dans `bakkesmod/cfg/rltm_bridge.cfg`, et peuvent
 | **Spectator** | Rejoindre les spectateurs, masquer le HUD (et les éléments gardés), masquer les graphes de statistiques |
 | **End of the match** | Se marquer prêt, sauvegarder le replay, format du nom du replay avec un aperçu |
 | **Server control** | Commandes autorisées au serveur, par groupe |
+| **Monitor** | Moniteur local pour la [page du moniteur](monitor.md), son port et son état, bouton pour ouvrir la page |
 | **Advanced WebSocket settings** | Reconnexion, compression, délais, mode debug |
 | **Reset** | Remettre tous les réglages par défaut |
 
@@ -75,6 +76,15 @@ Le serveur peut envoyer des [commandes](protocol/commands.md) au jeu. Seules les
 | `rltm_server_allow_settings` | `1` | Autoriser [`set_setting`](protocol/commands.md#set_setting) |
 
 `ping` et `resync` sont toujours autorisées tant que le contrôle par le serveur est activé.
+
+## Moniteur {#monitor}
+
+Le [moniteur](monitor.md) affiche les messages du plugin et lui envoie des commandes depuis une page web, sans serveur.
+
+| Cvar | Défaut | Description |
+|---|---|---|
+| `rltm_monitor` | `0` | Ouvrir un serveur WebSocket accessible uniquement depuis cet ordinateur (`127.0.0.1`) pour la page du moniteur. Seuls le site de la documentation et les pages locales peuvent s'y connecter. |
+| `rltm_monitor_port` | `8765` | Port du moniteur, de 1024 à 65535 |
 
 ## Commandes de la console {#console-commands}
 

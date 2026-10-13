@@ -69,5 +69,7 @@ python tools/test_server.py
 
 Connecter le plugin à `ws://localhost:3000`, rejoindre un match, et taper `help` dans le terminal pour voir les commandes (`ping`, `focus <joueur>`, `replay <bleu> <orange> <partie>`...).
 
+Ou, sans rien installer, utilisez le [moniteur](monitor.md) dans le navigateur.
+
 !!! tip "Mode debug"
     Activer *Advanced WebSocket settings* → *Debug mode* (`rltm_debug 1`) pour voir chaque message envoyé au serveur et reçu de lui dans la console BakkesMod (++f6++).

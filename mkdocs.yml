@@ -23,6 +23,7 @@ nav:
   - Home: index.md
   - Getting started: getting-started.md
   - Configuration: configuration.md
+  - Monitor: monitor.md
   - Protocol:
       - Overview: protocol/index.md
       - Messages: protocol/messages.md
@@ -51,6 +52,7 @@ plugins:
             Home: Accueil
             Getting started: Démarrage
             Configuration: Configuration
+            Monitor: Moniteur
             Protocol: Protocole
             Overview: Vue d'ensemble
             Messages: Messages
@@ -97,6 +99,7 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.highlight
   - pymdownx.inlinehilite
+  - pymdownx.keys
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.superfences:
@@ -104,3 +107,9 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra_css:
+  - stylesheets/monitor.css
+
+extra_javascript:
+  - javascripts/monitor.js

@@ -137,7 +137,18 @@ Chaque commande doit recevoir un `response`. **Aucune ne doit faire planter ou s
 - [ ] `bad` (JSON invalide), `unknown` (commande inconnue), `deep` (JSON trop profond), `big` (message de 20 Ko) → réponses d'erreur, aucun crash.
 - [ ] `flood` (200 commandes d'un coup) → environ 64 réponses `success`, les autres `Too many pending commands`, **sans saccade**.
 
-## 13. Stabilité
+## 13. Moniteur (page du site de documentation)
+
+- [ ] *Monitor* → **Enable the monitor** : la fenêtre affiche `Listening on ws://127.0.0.1:8765 (0 page(s) connected)` et la console `Monitor: listening on ws://127.0.0.1:8765`.
+- [ ] **Open the monitor page** ouvre la page du moniteur du site dans le navigateur (le site doit être publié, sinon lancer `mkdocs serve` et ouvrir `http://127.0.0.1:8000/monitor/`). Le navigateur peut demander d'autoriser l'accès au réseau local : accepter.
+- [ ] **Connecter** : l'état passe à **Connecté**, la carte *Plugin* affiche la version, et les états du match arrivent (également sans être connecté à un serveur).
+- [ ] Pendant un match : score, temps, caméra et trafic (~10 entités/s) se mettent à jour ; le journal affiche les événements.
+- [ ] Les boutons de commande fonctionnent dans le jeu (`focus_player` sur un joueur, `spectate`…) et les réponses apparaissent dans le journal. Désactiver un groupe dans *Server control* → la commande est refusée.
+- [ ] Changer le port (ex. 8766) : le moniteur redémarre sur le nouveau port. Port déjà utilisé → erreur affichée dans la fenêtre, sans crash.
+- [ ] Depuis un autre site (ex. ouvrir la console du navigateur sur `https://example.com` et taper `new WebSocket("ws://127.0.0.1:8765")`) : la connexion est refusée et la console du jeu affiche `Monitor: connection from https://example.com rejected`.
+- [ ] Désactiver le moniteur, puis décharger le plugin avec le moniteur actif : aucun crash.
+
+## 14. Stabilité
 
 - [ ] Décharger/recharger le plugin **pendant un match** (`plugin unload rltmbridge` puis `plugin load rltmbridge`) : aucun crash, les données reprennent.
 - [ ] Alt-Tab pendant un match, puis retour : pas de valeurs aberrantes dans `stats` (les images de plus de 0,1 s ne sont pas comptées).

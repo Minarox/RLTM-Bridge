@@ -5,12 +5,28 @@
 
 #include "fmt/chrono.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#pragma comment(lib, "shell32.lib")
+#endif
+
 namespace
 {
 	const ImVec4 COLOR_GREEN = ImVec4(0.2f, 0.8f, 0.2f, 1.0f);
 	const ImVec4 COLOR_YELLOW = ImVec4(1.0f, 0.8f, 0.0f, 1.0f);
 	const ImVec4 COLOR_RED = ImVec4(0.9f, 0.2f, 0.2f, 1.0f);
 	const ImVec4 COLOR_GREY = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
+
+	// Monitor page of the documentation, connecting to the local monitor of the plugin
+	const std::string MONITOR_PAGE_URL = "https://minarox.github.io/RLTM-Bridge/monitor/";
+
+	void OpenInBrowser(const std::string& url)
+	{
+#ifdef _WIN32
+		ShellExecuteA(nullptr, "open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+#endif
+	}
 
 	void RenderTooltip(const char* tooltip)
 	{
@@ -47,6 +63,7 @@ void RLTMBridge::RenderSettings()
 	if (ImGui::CollapsingHeader("Spectator", ImGuiTreeNodeFlags_DefaultOpen)) RenderSpectatorSettings();
 	if (ImGui::CollapsingHeader("End of the match", ImGuiTreeNodeFlags_DefaultOpen)) RenderMatchEndSettings();
 	if (ImGui::CollapsingHeader("Server control")) RenderServerControlSettings();
+	if (ImGui::CollapsingHeader("Monitor")) RenderMonitorSettings();
 	if (ImGui::CollapsingHeader("Advanced WebSocket settings")) RenderWebSocketSettings();
 	if (ImGui::CollapsingHeader("Reset")) RenderResetSettings();
 }
@@ -188,6 +205,28 @@ void RLTMBridge::RenderServerControlSettings()
 		RenderCvarCheckbox("Game settings", Cvars::ServerAllowSettings, "Change the data, spectator and end of the match settings, never the connection nor the server control (set_setting)");
 		ImGui::Unindent();
 	}
+}
+
+void RLTMBridge::RenderMonitorSettings()
+{
+	RenderHelp("Shows the messages of the plugin and sends commands from a web page, without a server. "
+		"The plugin opens a WebSocket server only reachable from this computer (127.0.0.1), for the monitor page of the documentation and the local pages.");
+
+	if (!RenderCvarCheckbox("Enable the monitor", Cvars::Monitor, "Open the local WebSocket server of the monitor")) return;
+
+	ImGui::Indent();
+	RenderCvarInputInt("Port", Cvars::MonitorPort, "Port of the local monitor, 8765 by default (restarts the monitor)");
+
+	const std::string error = GetMonitorError();
+	CVarWrapper port = GetCvar(Cvars::MonitorPort);
+	const int portValue = port ? port.getIntValue() : 8765;
+
+	if (!error.empty()) ImGui::TextColored(COLOR_RED, "Error: %s", error.c_str());
+	else ImGui::TextColored(COLOR_GREEN, "Listening on ws://127.0.0.1:%d (%zu page(s) connected)", portValue, GetMonitorClientsCount());
+
+	if (ImGui::Button("Open the monitor page")) OpenInBrowser(MONITOR_PAGE_URL + "?port=" + std::to_string(portValue));
+	RenderTooltip("Opens the monitor page of the documentation in the browser");
+	ImGui::Unindent();
 }
 
 void RLTMBridge::RenderWebSocketSettings()

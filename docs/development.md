@@ -7,7 +7,7 @@ RLTMBridge.sln
 RLTMBridge/
 ├── RLTMBridge.h / .cpp    Plugin class, load / unload and game hooks
 ├── Settings/              Cvars, console commands and settings window
-├── WebSocket/             Connection to the server, messages and server commands
+├── WebSocket/             Connection to the server, messages, server commands and local monitor
 ├── Protocol/              Messages format, without the BakkesMod SDK (unit tested)
 ├── Game/                  Game data, statistics, events, result and actions (HUD, spectator, replays)
 ├── IMGUI/, fmt/           Third-party libraries

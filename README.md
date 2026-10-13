@@ -64,6 +64,9 @@ The settings window is organized by feature: connection to the server, status (m
 | `rltm_max_wait_between_retries` | `500` | Maximum wait between reconnection retries (milliseconds) |
 | `rltm_per_message_deflate` | `1` | Compress the messages |
 | `rltm_debug` | `0` | Log the messages sent to and received from the server in the console (except the entities) |
+| **Monitor** | | |
+| `rltm_monitor` | `0` | Local WebSocket server (127.0.0.1 only) for the [monitor page](https://minarox.github.io/RLTM-Bridge/monitor/) of the documentation |
+| `rltm_monitor_port` | `8765` | Port of the monitor |
 | **Data** | | |
 | `rltm_send_entities` | `1` | Send the balls and cars data (`entities`) |
 | `rltm_entities_interval` | `100` | Interval between two entities updates (16 to 1000 milliseconds) |
@@ -132,6 +135,7 @@ Only these commands can be executed: an invalid message or command is answered w
 ## 🧪 Tests
 
 - Unit tests of the messages format (no BakkesMod SDK needed): `sh tests/run.sh` (requires [nlohmann/json](https://github.com/nlohmann/json)), run by the CI on each push.
+- [Monitor page](https://minarox.github.io/RLTM-Bridge/monitor/) in the browser: enable the monitor in the plugin settings, it shows the messages of the plugin and sends commands without a server.
 - Test server to check the plugin without RLTM: `pip install websockets` then `python tools/test_server.py`, it shows the messages of the plugin and sends commands typed in the terminal.
 - In game: [docs/TEST-CHECKLIST.md](docs/TEST-CHECKLIST.md).
 

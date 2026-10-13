@@ -127,6 +127,7 @@
     <ClCompile Include="Settings\SettingsWindow.cpp" />
     <ClCompile Include="WebSocket\WebSocket.cpp" />
     <ClCompile Include="WebSocket\ServerCommands.cpp" />
+    <ClCompile Include="WebSocket\Monitor.cpp" />
     <ClCompile Include="Protocol\Protocol.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

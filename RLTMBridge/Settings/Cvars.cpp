@@ -43,6 +43,13 @@ void RLTMBridge::RegisterCvars()
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) { debug = cvar.getBoolValue(); });
 	debug = IsCvarEnabled(Cvars::Debug);
 
+	// Monitor: started or stopped when its settings change (and when they are loaded from the cfg file)
+	auto onMonitorSettingChanged = [this](std::string oldValue, CVarWrapper cvar) { ApplyMonitorSettings(); };
+	persistentStorage->RegisterPersistentCvar(Cvars::Monitor, "0", "Open a local WebSocket server (127.0.0.1) for the monitor page of the documentation", true, true, 0, true, 1)
+		.addOnValueChanged(onMonitorSettingChanged);
+	persistentStorage->RegisterPersistentCvar(Cvars::MonitorPort, "8765", "Port of the local monitor", true, true, 1024, true, 65535)
+		.addOnValueChanged(onMonitorSettingChanged);
+
 	// Server control
 	persistentStorage->RegisterPersistentCvar(Cvars::ServerControl, "1", "Allow the server to send commands", true, true, 0, true, 1);
 	persistentStorage->RegisterPersistentCvar(Cvars::ServerAllowCamera, "1", "Allow the server to move the spectator camera", true, true, 0, true, 1);

@@ -11,6 +11,8 @@
 #include <mutex>
 #include <ixwebsocket/IXNetSystem.h>
 #include <ixwebsocket/IXWebSocket.h>
+#include <ixwebsocket/IXWebSocketServer.h>
+#include <set>
 #include <nlohmann/json.hpp>
 
 #include "bakkesmod/plugin/bakkesmodplugin.h"
@@ -46,6 +48,10 @@ namespace Cvars
 	inline constexpr const char* PingInterval = "rltm_ping_interval";
 	inline constexpr const char* Debug = "rltm_debug";
 
+	// Monitor
+	inline constexpr const char* Monitor = "rltm_monitor";
+	inline constexpr const char* MonitorPort = "rltm_monitor_port";
+
 	// Server control
 	inline constexpr const char* ServerControl = "rltm_server_control";
 	inline constexpr const char* ServerAllowCamera = "rltm_server_allow_camera";
@@ -74,6 +80,7 @@ namespace Cvars
 	// Every cvar of the plugin (reset to the default values)
 	inline constexpr const char* All[] = {
 		Url, ClientName, Token, AutoConnect, AutoReconnect, HandshakeTimeout, MinWaitBetweenRetries, MaxWaitBetweenRetries, PerMessageDeflate, PingInterval, Debug,
+		Monitor, MonitorPort,
 		ServerControl, ServerAllowCamera, ServerAllowActions, ServerAllowReplayName, ServerAllowSettings,
 		SendEntities, EntitiesInterval, SendSpectator, SendStats,
 		AutoSpectate, HideHud, HudNames, HudMatchInfo, HideStatGraphs,
@@ -151,6 +158,7 @@ private:
 	void RenderSpectatorSettings();
 	void RenderMatchEndSettings();
 	void RenderWebSocketSettings();
+	void RenderMonitorSettings();
 	void RenderResetSettings();
 	bool RenderCvarCheckbox(const char* label, const char* cvarName, const char* tooltip);
 	void RenderCvarInputInt(const char* label, const char* cvarName, const char* tooltip);
@@ -179,6 +187,19 @@ private:
 	void ResendState();
 	void CountSent(const ix::WebSocketSendInfo& info);
 	void SetSocketStatus(const std::string& error = "");
+
+	// Local monitor (WebSocket/Monitor.cpp): WebSocket server on 127.0.0.1 for the monitor page of the documentation
+	std::mutex monitorMutex;
+	std::shared_ptr<ix::WebSocketServer> monitor; // null when stopped
+	std::set<const ix::WebSocket*> monitorConnections; // Clients with an allowed origin (only compared, never dereferenced)
+	std::string monitorError;
+	void ApplyMonitorSettings();
+	void StartMonitor(int port);
+	void StopMonitor();
+	void BroadcastToMonitor(const std::string& message);
+	void SendStateToMonitorClient(ix::WebSocket& client);
+	size_t GetMonitorClientsCount();
+	std::string GetMonitorError();
 
 	// Server commands (WebSocket/ServerCommands.cpp)
 	using ServerCommand = Protocol::Command;

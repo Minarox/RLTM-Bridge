@@ -45,6 +45,7 @@ void RLTMBridge::onUnload()
 	// Clear the overlays before leaving
 	ResetMatch();
 	Disconnect();
+	StopMonitor();
 
 	RestoreAutoSaveReplays();
 

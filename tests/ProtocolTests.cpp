@@ -122,6 +122,16 @@ namespace
 		Check(SanitizeHeaderValue("token\r\nX-Injected: 1") == "tokenX-Injected: 1", "header injection");
 	}
 
+	void TestMonitorOrigins()
+	{
+		for (const char* origin : { "", "null", "https://minarox.github.io", "http://localhost", "http://localhost:8000", "http://127.0.0.1:8765" })
+			Check(IsAllowedMonitorOrigin(origin), std::string("allowed origin ") + origin);
+
+		for (const char* origin : { "https://evil.com", "https://minarox.github.io.evil.com", "http://localhost.evil.com", "http://localhost:80abc",
+			"http://127.0.0.1.nip.io", "https://localhost", "http://localhost:", "http://127.0.0.10" })
+			Check(!IsAllowedMonitorOrigin(origin), std::string("rejected origin ") + origin);
+	}
+
 	void TestColors()
 	{
 		Check(ToHexColor(1.0f, 0.5f, 0.0f) == "#FF8000", "hex color");
@@ -137,6 +147,7 @@ int main()
 	TestReplayName();
 	TestMessages();
 	TestHeaders();
+	TestMonitorOrigins();
 	TestColors();
 
 	if (failures) std::cout << failures << " test(s) failed\n";

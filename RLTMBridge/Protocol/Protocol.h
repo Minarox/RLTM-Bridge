@@ -67,6 +67,13 @@ namespace Protocol
 	// Value of an HTTP header: without the control characters (no header injection) nor the surrounding spaces
 	std::string SanitizeHeaderValue(const std::string& value);
 
+	// Website allowed to connect to the local monitor of the plugin (the documentation site)
+	inline const std::string MONITOR_SITE_ORIGIN = "https://minarox.github.io";
+
+	// Origin header allowed to connect to the local monitor: the documentation site, a local page (localhost,
+	// 127.0.0.1 or a file) or no Origin (not a browser). Any other website open in the browser is rejected.
+	bool IsAllowedMonitorOrigin(const std::string& origin);
+
 	// "#RRGGBB" from color components between 0 and 1 (clamped)
 	std::string ToHexColor(float r, float g, float b);
 }
