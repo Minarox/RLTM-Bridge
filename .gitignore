@@ -344,3 +344,6 @@ MigrationBackup/
 *.exp
 plugins*
 !plugins/settings
+
+# Documentation built by MkDocs
+/site/

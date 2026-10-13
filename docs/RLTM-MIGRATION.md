@@ -8,8 +8,21 @@ Le format des messages du plugin a changé. Ta mission : adapter RLTM à ce nouv
 
 1. Explore RLTM et repère tout le code qui reçoit ou utilise les messages du plugin. Cherche les topics `match`, `players`, `entities`, `statistic`, les champs `statistics`, `asFlip`, et les clés de joueur `"<uid>|<name>"`.
 2. Fais la liste des fichiers concernés (serveur, stores, overlays, tests) avant de modifier quoi que ce soit.
-3. Si le serveur utilise la librairie Node `ws`, vérifie l'option `perMessageDeflate`. Elle est désactivée par défaut côté serveur alors que le plugin propose la compression. L'activer divise par ~10 la taille des messages sur le réseau.
+3. La compression (`perMessageDeflate`) est déjà activée dans RLTM : garde-la, elle divise par ~10 la taille des messages sur le réseau.
 4. En cas de doute sur un comportement du plugin, la référence est le code de `Minarox/RLTM-Bridge` (branche `dev`) : `RLTMBridge/Game/GameData.cpp` (données envoyées), `RLTMBridge/WebSocket/WebSocket.cpp` (envoi) et `RLTMBridge/WebSocket/ServerCommands.cpp` (commandes).
+
+## État actuel de RLTM (branche `develop`)
+
+Travaille sur la branche **`develop`** de RLTM (`main` est en retard). Ce qui y concerne le plugin, relevé au moment de la rédaction :
+
+- **`src/controllers/plugin.ts`** reçoit le plugin sur `/` avec le jeton du tournoi dans l'URL (`?token=…`, vérifié dans `beforeHandle`). C'est l'URL à saisir dans le plugin : `ws://<hôte>:<port>/?token=<jeton>`. Le jeton dans l'URL reste valable ; l'en-tête `Authorization: Bearer` du plugin (`rltm_token`) est une alternative facultative.
+- **Un seul plugin par tournoi** : une nouvelle connexion remplace la précédente (`app.store[tournamentId][Topic.PLUGIN]`), et les messages de l'ancienne reçoivent `{ "valid": false }`. Pour plusieurs matchs en parallèle, utilise le nom du client (`plugin.client` / en-tête `X-RLTM-Client`) pour associer chaque connexion à un match.
+- **RLTM envoie `{ "valid": true }` à l'ouverture** (et `{ "valid": false }` au plugin remplacé). Ce ne sont pas des commandes : le plugin y répond par un `response` d'erreur (`"command" must be a string`). C'est sans danger, mais supprime ces messages (ou remplace-les par un `ping` avec un `id` si tu veux vérifier que le plugin répond).
+- **`src/types/plugin.ts`** décrit encore le protocole v1 : `MatchPayload.statistics`, les 40 compteurs à plat dans `StatisticsPayload`, `Cars.asFlip`, `Balls.radius` (que le plugin n'envoie plus). Le contrôleur enregistre le match et les statistiques en base à chaque message `match` (`createOrUpdateMatch`, `createOrUpdateStatistic`) : ce traitement doit passer sur `scoreboard`, et l'enregistrement final idéalement sur `result`.
+- **`Topic.PLUGIN = "plugin"`** (`src/types/app.ts`) sert déjà, côté RLTM, à publier aux overlays l'identifiant du plugin connecté. Le plugin envoie maintenant lui aussi un topic `plugin` (version, protocole, client) : ne mélange pas les deux.
+- `perMessageDeflate` est déjà activé (`src/index.ts`), avec `idleTimeout: 3` : le plugin envoie un ping chaque seconde par défaut (`rltm_ping_interval`), garde-le en dessous de 3 s.
+
+La documentation complète du protocole est publiée sur le site du plugin (sources dans `docs/protocol/` du dépôt `Minarox/RLTM-Bridge`) : elle fait référence en cas de différence avec ce fichier.
 
 ## Ce qui change (v1 → v2)
 
@@ -238,7 +251,7 @@ Une idée de fonctionnalité si RLTM a une interface de régie : boutons « cam�
 7. Créer (ou adapter) un overlay « joueur regardé » piloté par le topic `spectator` : afficher les stats du `target` (depuis `scoreboard`), et le cacher quand `target` vaut `null`.
 8. Utiliser `entities.time` pour l'interpolation là où des positions sont affichées (minimap, etc.).
 9. Envoyer `set_replay_name` pour chaque partie d'une série, avec les noms d'équipes RLTM placés du bon côté (bleu/orange) et le numéro de la partie. Afficher une erreur dans RLTM si la réponse est `success: false`.
-10. Activer `perMessageDeflate` sur le serveur WebSocket si ce n'est pas le cas.
+10. Garder `perMessageDeflate` activé sur le serveur WebSocket (c'est déjà le cas dans RLTM).
 11. Optionnel : envoyer des commandes et gérer les réponses.
 12. Mettre à jour les types, les tests et la documentation de RLTM. Si RLTM a des tests, ajoute des fixtures construites à partir des exemples ci-dessus.
 

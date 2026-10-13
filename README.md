@@ -42,7 +42,7 @@
 - [x] Customize replay name
 - [x] Plugin settings
 - [x] Control the game from the server
-- [ ] Documentation
+- [x] Documentation
 
 ## ⚙️ Configuration
 
@@ -134,6 +134,10 @@ Only these commands can be executed: an invalid message or command is answered w
 - Unit tests of the messages format (no BakkesMod SDK needed): `sh tests/run.sh` (requires [nlohmann/json](https://github.com/nlohmann/json)), run by the CI on each push.
 - Test server to check the plugin without RLTM: `pip install websockets` then `python tools/test_server.py`, it shows the messages of the plugin and sends commands typed in the terminal.
 - In game: [docs/TEST-CHECKLIST.md](docs/TEST-CHECKLIST.md).
+
+## 📖 Documentation
+
+The documentation, in English and in French, is published on [minarox.github.io/RLTM-Bridge](https://minarox.github.io/RLTM-Bridge): installation, configuration, complete reference of the messages and the commands, server integration. Its sources are in `docs/` ([MkDocs Material](https://squidfunk.github.io/mkdocs-material/)): `pip install -r docs/requirements.txt` then `mkdocs serve`.
 
 ## 🔨 Build
 
