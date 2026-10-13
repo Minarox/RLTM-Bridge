@@ -76,13 +76,15 @@ Every setting is available in the plugin settings window (`F2` > `Plugins` > `We
 
 Every message sent to the server is a JSON object `{ "topic": "<topic>", "payload": <data> }`:
 
-- `match` - State of the match (arena, score, clock, flags and statistics of each player)
+- `plugin` - Sent first on each connection: plugin `version` and `protocol` version of the messages format (currently `2`)
+- `match` - State of the match (arena, score, clock and flags)
+- `scoreboard` - Statistics of each player (score, goals, saves, etc. and the `events` counters received for the player, a missing event means 0)
 - `players` - Players of the match (uid, name, team, car)
 - `entities` - Balls and cars data (speed, location, boost, etc.), sent every `wsc_entities_interval` ms while the match is playing
 - `statistic` - Statistic event of a player (goal, save, demolition, etc.)
 - `response` - Result of a command sent by the server (see below)
 
-The `match`, `players` and `entities` topics are only sent when their payload changes, and are sent again on each (re)connection. A `null` payload means that there is no match anymore.
+The `match`, `scoreboard`, `players` and `entities` topics are only sent when their payload changes, and are sent again on each (re)connection. A `null` payload means that there is no match anymore.
 
 ## 🎮 Commands
 
@@ -92,7 +94,7 @@ Each command is answered on the `response` topic with `{ "command": "<name>", "i
 | Command | Payload | Description |
 | --- | --- | --- |
 | `ping` | | Check that the plugin answers |
-| `resync` | | Send the current `match`, `players` and `entities` states again |
+| `resync` | | Send the current `match`, `scoreboard`, `players` and `entities` states again |
 | `spectate` | | Join the spectators |
 | `ready` | | Mark as ready |
 | `hide_hud` | | Hide the spectator HUD |

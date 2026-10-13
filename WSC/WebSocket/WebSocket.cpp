@@ -7,7 +7,9 @@ namespace
 	{
 		switch (topic)
 		{
+			case Topic::Plugin: return "plugin";
 			case Topic::Match: return "match";
+			case Topic::Scoreboard: return "scoreboard";
 			case Topic::Statistic: return "statistic";
 			case Topic::Entities: return "entities";
 			case Topic::Players: return "players";
@@ -45,6 +47,12 @@ void WSC::InitSocket()
 			{
 				LOG("WebSocket connection opened");
 				SetSocketStatus();
+
+				// Let the server check that it understands the messages, then send it the current state of the game
+				json plugin = json::object();
+				plugin["version"] = plugin_version;
+				plugin["protocol"] = protocol_version;
+				Send(Topic::Plugin, plugin);
 
 				ResendState();
 				break;
@@ -128,8 +136,8 @@ void WSC::Send(Topic topic, const json& payload)
 {
 	const std::string topicName = GetTopicName(topic);
 
-	// Match, players and entities are states, the other topics are one-shot messages
-	if (topic == Topic::Match || topic == Topic::Players || topic == Topic::Entities)
+	// Match, scoreboard, players and entities are states, the other topics are one-shot messages
+	if (topic == Topic::Match || topic == Topic::Scoreboard || topic == Topic::Players || topic == Topic::Entities)
 	{
 		std::lock_guard<std::mutex> lock(sentCacheMutex);
 

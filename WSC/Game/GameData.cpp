@@ -23,16 +23,6 @@ namespace
 	// Team number of the players that aren't in a team (spectators)
 	constexpr int NO_TEAM = 255;
 
-	// Stat events counted for each player, always sent (0 by default) in the match statistics
-	constexpr const char* STAT_EVENTS[] = {
-		"Demolish", "Demolition", "AerialGoal", "BackwardsGoal", "BicycleGoal", "LongGoal", "TurtleGoal", "PoolShot",
-		"OvertimeGoal", "HatTrick", "Playmaker", "EpicSave", "Savior", "Center", "Clear", "FirstTouch", "BreakoutDamage",
-		"BreakoutDamageLarge", "LowFive", "HighFive", "HoopsSwishGoal", "BicycleHit", "OwnGoal", "KO_Winner", "KO_Knockout",
-		"KO_DoubleKO", "KO_TripleKO", "KO_Death", "KO_LightHit", "KO_HeavyHit", "KO_AerialLightHit", "KO_AerialHeavyHit",
-		"KO_HitTaken", "KO_BlockTaken", "KO_Grabbed", "KO_Thrown", "KO_LightBlock", "KO_HeavyBlock", "KO_PlayerGrabbed",
-		"KO_PlayerThrown"
-	};
-
 	// Unreal units per second to km/h, rounded
 	int ToKmh(const Vector& velocity)
 	{
@@ -113,9 +103,11 @@ void WSC::UpdateMatch(bool countdownStarted)
 	payload["isOvertime"] = static_cast<bool>(server.GetbOverTime());
 	payload["isEnded"] = match.ended;
 	payload["isReplay"] = match.replay;
-	payload["statistics"] = match.started ? GetStatistics(server) : json::object();
 
 	Send(Topic::Match, payload);
+
+	// Separated from the match: the clock changes every second, the statistics only a few times per minute
+	Send(Topic::Scoreboard, match.started ? GetScoreboard(server) : json::object());
 }
 
 void WSC::SetReplayState(bool replay)
@@ -143,9 +135,9 @@ json WSC::GetScore(ServerWrapper server)
 	return score;
 }
 
-json WSC::GetStatistics(ServerWrapper server)
+json WSC::GetScoreboard(ServerWrapper server)
 {
-	json statistics = json::object();
+	json scoreboard = json::object();
 
 	for (PriWrapper player : server.GetPRIs())
 	{
@@ -164,19 +156,16 @@ json WSC::GetStatistics(ServerWrapper server)
 		playerData["ballTouches"] = player.GetBallTouches();
 		playerData["carTouches"] = player.GetCarTouches();
 
+		// Only the stat events received for the player, a missing event means 0
 		const std::string key = GetPlayerKey(playerData);
-		const std::map<std::string, int>& events = match.statEvents[key];
+		playerData["events"] = json::object();
+		for (const auto& [eventName, count] : match.statEvents[key])
+			playerData["events"][eventName] = count;
 
-		for (const char* eventName : STAT_EVENTS)
-		{
-			auto it = events.find(eventName);
-			playerData[eventName] = it != events.end() ? it->second : 0;
-		}
-
-		statistics[key] = playerData;
+		scoreboard[key] = playerData;
 	}
 
-	return statistics;
+	return scoreboard;
 }
 
 void WSC::OnStatTicker(void* params)
@@ -209,7 +198,7 @@ void WSC::OnStatTicker(void* params)
 	payload["eventName"] = eventName;
 	Send(Topic::Statistic, payload);
 
-	// Refresh the statistics of the match with the new event
+	// Refresh the scoreboard with the new event
 	UpdateMatch();
 }
 
@@ -315,6 +304,6 @@ void WSC::ResetMatch()
 {
 	match = MatchState();
 
-	for (Topic topic : { Topic::Match, Topic::Entities, Topic::Players })
+	for (Topic topic : { Topic::Match, Topic::Scoreboard, Topic::Entities, Topic::Players })
 		Send(topic, nullptr);
 }

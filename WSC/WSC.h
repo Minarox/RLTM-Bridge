@@ -26,6 +26,9 @@ using json = nlohmann::json;
 
 constexpr auto plugin_version = stringify(VERSION_MAJOR) "." stringify(VERSION_MINOR) "." stringify(VERSION_PATCH) "." stringify(VERSION_BUILD);
 
+// Version of the messages format, sent to the server on connection. Increase it on each breaking change
+constexpr int protocol_version = 2;
+
 // Names of the plugin cvars, shared by the logic and the settings window
 namespace Cvars
 {
@@ -52,7 +55,9 @@ namespace Cvars
 // Topics of the messages sent to the server: { "topic": "<topic>", "payload": <data> }
 enum class Topic
 {
+	Plugin,
 	Match,
+	Scoreboard,
 	Statistic,
 	Entities,
 	Players,
@@ -151,7 +156,7 @@ private:
 	void UpdateMatch(bool countdownStarted = false);
 	void SetReplayState(bool replay);
 	json GetScore(ServerWrapper server);
-	json GetStatistics(ServerWrapper server);
+	json GetScoreboard(ServerWrapper server);
 	void OnStatTicker(void* params);
 	void OnTick();
 	void SendEntities(ServerWrapper server);
