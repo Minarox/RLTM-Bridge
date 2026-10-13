@@ -144,6 +144,7 @@ private:
 	};
 	MatchState match;
 	std::chrono::steady_clock::time_point lastEntitiesUpdate;
+	bool entitiesSkipped = false; // true while the server doesn't read the messages fast enough
 	ServerWrapper GetServerWrapper();
 	bool IsMatchLive() const;
 	void UpdateMatch(bool countdownStarted = false);

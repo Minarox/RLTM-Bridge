@@ -11,6 +11,9 @@ namespace
 		uintptr_t StatEvent;
 	};
 
+	// Bytes waiting to be sent above which the entities updates are skipped
+	constexpr size_t MAX_BUFFERED_BYTES = 64 * 1024;
+
 	// Playlist ID of the private matches
 	constexpr int PRIVATE_MATCH_PLAYLIST = 6;
 
@@ -223,7 +226,18 @@ void WSC::OnTick()
 	if (!server) return;
 
 	SendPlayers(server);
-	SendEntities(server);
+
+	// The messages are written to the network from the game thread: if the server doesn't read them fast enough,
+	// skip the entities (outdated on the next update anyway) instead of filling the send buffer
+	const bool overloaded = socket.bufferedAmount() > MAX_BUFFERED_BYTES;
+	if (overloaded != entitiesSkipped)
+	{
+		entitiesSkipped = overloaded;
+		if (overloaded) LOG("The server doesn't read the messages fast enough, entities updates are skipped");
+		else LOG("The server caught up, entities updates are resumed");
+	}
+
+	if (!overloaded) SendEntities(server);
 }
 
 void WSC::SendEntities(ServerWrapper server)
