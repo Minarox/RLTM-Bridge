@@ -31,6 +31,8 @@ void WSC::RegisterCvars()
 	persistentStorage->RegisterPersistentCvar(Cvars::PingInterval, "1", "Ping interval (seconds)", true, true, 1)
 		.addOnValueChanged(onSocketSettingChanged);
 
+	persistentStorage->RegisterPersistentCvar(Cvars::ServerControl, "1", "Allow the server to control the game (spectator camera, ready, etc.)", true, true, 0, true, 1);
+
 	// Game
 	persistentStorage->RegisterPersistentCvar(Cvars::EntitiesInterval, "100", "Interval between two entities updates (milliseconds)", true, true, 16);
 	persistentStorage->RegisterPersistentCvar(Cvars::AutoSaveReplays, "1", "Save the replay at the end of the match", true, true, 0, true, 1)

@@ -8,6 +8,9 @@ namespace
 
 	// Graph level of the engine statistics graphs (F10) set when spectating
 	constexpr int STAT_GRAPHS_LEVEL = 6;
+
+	// Team number of the players that aren't in a team (spectators)
+	constexpr int NO_TEAM = 255;
 }
 
 /*
@@ -38,35 +41,42 @@ void WSC::RestoreAutoSaveReplays()
 	--- Game HUD ---
 */
 
-void WSC::HideSpectatorHud(int delay)
+// The actions return false when they can't be done (no match, not spectating, etc.)
+// "force" ignores the cvar enabling the automatic action, used by the server commands
+
+bool WSC::HideSpectatorHud(int delay, bool force)
 {
-	if (!IsCvarEnabled(Cvars::HideHud)) return;
+	if (!force && !IsCvarEnabled(Cvars::HideHud)) return false;
 
 	ServerWrapper server = GetServerWrapper();
-	if (!server) return;
+	if (!server) return false;
 
 	PlayerControllerWrapper primaryPlayer = server.GetLocalPrimaryPlayer();
-	if (!primaryPlayer) return;
+	if (!primaryPlayer) return false;
 
 	PriWrapper player = primaryPlayer.GetPRI();
-	if (!player || !player.IsSpectator()) return;
+	if (!player || !player.IsSpectator()) return false;
 
 	// Wait for the spectator HUD to be initialized
 	cvarManager->executeCommand("sleep " + std::to_string(delay) + "; sleep 16; replay_gui hud 0; replay_gui names 1; replay_gui matchinfo 1", false);
+	return true;
 }
 
-void WSC::HideStatGraphs()
+bool WSC::HideStatGraphs()
 {
-	if (!IsCvarEnabled(Cvars::HideStatGraphs)) return;
+	if (!IsCvarEnabled(Cvars::HideStatGraphs)) return false;
 
 	ServerWrapper server = GetServerWrapper();
-	if (!server) return;
+	if (!server) return false;
 
 	EngineTAWrapper engine = gameWrapper->GetEngine();
-	if (!engine) return;
+	if (!engine) return false;
 
 	StatGraphSystemWrapper statGraphs = engine.GetStatGraphs();
-	if (statGraphs) statGraphs.SetGraphLevel(STAT_GRAPHS_LEVEL);
+	if (!statGraphs) return false;
+
+	statGraphs.SetGraphLevel(STAT_GRAPHS_LEVEL);
+	return true;
 }
 
 
@@ -74,30 +84,67 @@ void WSC::HideStatGraphs()
 	--- Player actions ---
 */
 
-void WSC::ReadyUp()
+bool WSC::ReadyUp(bool force)
 {
-	if (!IsCvarEnabled(Cvars::AutoReady)) return;
+	if (!force && !IsCvarEnabled(Cvars::AutoReady)) return false;
 
 	ServerWrapper server = GetServerWrapper();
-	if (!server) return;
+	if (!server) return false;
 
 	PlayerControllerWrapper playerController = gameWrapper->GetPlayerController();
-	if (!playerController) return;
+	if (!playerController) return false;
 
 	PriWrapper player = playerController.GetPRI();
-	if (player) player.ServerReadyUp();
+	if (!player) return false;
+
+	player.ServerReadyUp();
+	return true;
 }
 
-void WSC::JoinSpectators()
+bool WSC::JoinSpectators(bool force)
 {
-	if (!IsCvarEnabled(Cvars::AutoSpectate)) return;
+	if (!force && !IsCvarEnabled(Cvars::AutoSpectate)) return false;
 
 	ServerWrapper server = GetServerWrapper();
-	if (!server) return;
+	if (!server) return false;
 
 	PlayerControllerWrapper playerController = gameWrapper->GetPlayerController();
-	if (!playerController) return;
+	if (!playerController) return false;
 
 	PriWrapper player = playerController.GetPRI();
-	if (player && player.IsPlayer()) player.ServerSpectate();
+	if (!player) return false;
+
+	if (player.IsPlayer()) player.ServerSpectate();
+	return true;
+}
+
+
+/*
+	--- Spectator camera ---
+*/
+
+bool WSC::FocusPlayer(const std::string& uid, const std::string& name)
+{
+	ServerWrapper server = GetServerWrapper();
+	if (!server) return false;
+
+	CameraWrapper camera = gameWrapper->GetCamera();
+	if (!camera) return false;
+
+	for (PriWrapper player : server.GetPRIs())
+	{
+		if (!player || player.GetTeamNum() == NO_TEAM) continue;
+
+		UnrealStringWrapper playerName = player.GetPlayerName();
+		if (!playerName) continue;
+
+		const bool sameUid = !uid.empty() && player.GetUniqueIdWrapper().GetIdString() == uid;
+		const bool sameName = !name.empty() && playerName.ToString() == name;
+
+		// Bots share the same uid, the name is required to tell them apart
+		if ((uid.empty() || sameUid) && (name.empty() || sameName))
+			return camera.SetFocusActor(playerName.ToString());
+	}
+
+	return false;
 }

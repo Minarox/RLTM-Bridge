@@ -18,6 +18,7 @@ void WSC::onLoad()
 
 	RegisterCvars();
 	RegisterNotifiers();
+	RegisterServerCommands();
 	InitSocket();
 	HookEvents();
 

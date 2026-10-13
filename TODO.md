@@ -25,7 +25,10 @@
 
 ## Events from the server
 
-- [ ] ...
+- [x] Ping / resync
+- [x] Spectate / ready / hide HUD
+- [x] Focus a player with the spectator camera
+- [x] Change game settings
 
 ## Misc
 

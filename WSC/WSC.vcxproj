@@ -126,6 +126,7 @@
     <ClCompile Include="Settings\Cvars.cpp" />
     <ClCompile Include="Settings\SettingsWindow.cpp" />
     <ClCompile Include="WebSocket\WebSocket.cpp" />
+    <ClCompile Include="WebSocket\ServerCommands.cpp" />
     <ClCompile Include="Game\GameData.cpp" />
     <ClCompile Include="Game\GameActions.cpp" />
   </ItemGroup>

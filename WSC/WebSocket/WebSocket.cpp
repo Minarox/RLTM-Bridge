@@ -11,6 +11,7 @@ namespace
 			case Topic::Statistic: return "statistic";
 			case Topic::Entities: return "entities";
 			case Topic::Players: return "players";
+			case Topic::Response: return "response";
 		}
 
 		return "unknown";
@@ -22,7 +23,8 @@ namespace
 		message["topic"] = topic;
 		message["payload"] = payload;
 
-		return message.dump();
+		// Replace the invalid UTF-8 characters (e.g. in a player name) instead of throwing
+		return message.dump(-1, ' ', false, json::error_handler_t::replace);
 	}
 }
 
@@ -44,15 +46,7 @@ void WSC::InitSocket()
 				LOG("WebSocket connection opened");
 				SetSocketStatus();
 
-				// Send the current state of the game to the server
-				json cache;
-				{
-					std::lock_guard<std::mutex> lock(sentCacheMutex);
-					cache = sentCache;
-				}
-
-				for (auto& [topic, payload] : cache.items())
-					socket.send(BuildMessage(topic, payload));
+				ResendState();
 				break;
 			}
 
@@ -79,8 +73,7 @@ void WSC::InitSocket()
 			}
 
 			case ix::WebSocketMessageType::Message:
-				// TODO: Control the game from the server
-				LOG("WebSocket message received: {}", msg->str);
+				OnServerMessage(msg->str);
 				break;
 
 			default:
@@ -135,8 +128,8 @@ void WSC::Send(Topic topic, const json& payload)
 {
 	const std::string topicName = GetTopicName(topic);
 
-	// Statistic events are one-shot messages, the other topics are states
-	if (topic != Topic::Statistic)
+	// Match, players and entities are states, the other topics are one-shot messages
+	if (topic == Topic::Match || topic == Topic::Players || topic == Topic::Entities)
 	{
 		std::lock_guard<std::mutex> lock(sentCacheMutex);
 
@@ -148,6 +141,21 @@ void WSC::Send(Topic topic, const json& payload)
 	if (socket.getReadyState() != ix::ReadyState::Open) return;
 
 	socket.send(BuildMessage(topicName, payload));
+}
+
+// Sends the current state of the game to the server, on (re)connection or when asked by the server
+void WSC::ResendState()
+{
+	json cache;
+	{
+		std::lock_guard<std::mutex> lock(sentCacheMutex);
+		cache = sentCache;
+	}
+
+	if (socket.getReadyState() != ix::ReadyState::Open) return;
+
+	for (auto& [topic, payload] : cache.items())
+		socket.send(BuildMessage(topic, payload));
 }
 
 void WSC::SetSocketStatus(const std::string& error)

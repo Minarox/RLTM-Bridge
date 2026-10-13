@@ -48,6 +48,9 @@
     <ClCompile Include="WebSocket\WebSocket.cpp">
       <Filter>Source Files\WebSocket</Filter>
     </ClCompile>
+    <ClCompile Include="WebSocket\ServerCommands.cpp">
+      <Filter>Source Files\WebSocket</Filter>
+    </ClCompile>
     <ClCompile Include="Game\GameData.cpp">
       <Filter>Source Files\Game</Filter>
     </ClCompile>

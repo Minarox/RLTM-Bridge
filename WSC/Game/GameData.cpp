@@ -209,6 +209,8 @@ void WSC::OnStatTicker(void* params)
 
 void WSC::OnTick()
 {
+	ProcessServerCommands();
+
 	if (!IsMatchLive()) return;
 
 	CVarWrapper intervalCvar = GetCvar(Cvars::EntitiesInterval);
@@ -259,7 +261,7 @@ void WSC::SendEntities(ServerWrapper server)
 		carData["isOnGround"] = car.IsOnGround();
 		carData["isInGoal"] = static_cast<bool>(car.GetbWasInGoalZone());
 		carData["isDodging"] = car.IsDodging();
-		carData["asFlip"] = static_cast<bool>(car.HasFlip());
+		carData["hasFlip"] = static_cast<bool>(car.HasFlip());
 
 		BoostWrapper boost = car.GetBoostComponent();
 		carData["boost"] = boost ? static_cast<int>(boost.GetCurrentBoostAmount() * 100) : 0;

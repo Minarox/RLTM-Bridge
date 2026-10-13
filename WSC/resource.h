@@ -1,5 +1,5 @@
 // Microsoft Visual C++ generated include file.
-// Used by TemplateChanges.rc
+// Used by WSC.rc
 
 // Next default values for new objects
 // 

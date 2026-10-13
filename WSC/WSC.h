@@ -6,6 +6,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <deque>
 #include <map>
 #include <mutex>
 #include <ixwebsocket/IXNetSystem.h>
@@ -37,6 +38,7 @@ namespace Cvars
 	inline constexpr const char* MaxWaitBetweenRetries = "wsc_max_wait_between_retries";
 	inline constexpr const char* PerMessageDeflate = "wsc_per_message_deflate";
 	inline constexpr const char* PingInterval = "wsc_ping_interval";
+	inline constexpr const char* ServerControl = "wsc_server_control";
 
 	// Game
 	inline constexpr const char* EntitiesInterval = "wsc_entities_interval";
@@ -53,7 +55,8 @@ enum class Topic
 	Match,
 	Statistic,
 	Entities,
-	Players
+	Players,
+	Response
 };
 
 class WSC: public BakkesMod::Plugin::BakkesModPlugin, public SettingsWindowBase
@@ -108,7 +111,25 @@ private:
 	void Connect();
 	void Disconnect();
 	void Send(Topic topic, const json& payload);
+	void ResendState();
 	void SetSocketStatus(const std::string& error = "");
+
+	// Server commands (WebSocket/ServerCommands.cpp)
+	struct ServerCommand
+	{
+		std::string name;
+		json payload;
+		json id; // Optional, sent back in the response
+	};
+	using CommandHandler = std::function<void(const json& payload)>;
+	std::map<std::string, CommandHandler> commandHandlers;
+	std::mutex pendingCommandsMutex;
+	std::deque<ServerCommand> pendingCommands;
+	void RegisterServerCommands();
+	void OnServerMessage(const std::string& message);
+	void ProcessServerCommands();
+	void ExecuteServerCommand(const ServerCommand& command);
+	void SendCommandResponse(const std::string& command, const json& id, const std::string& error = "");
 
 	// Game data (Game/GameData.cpp)
 	struct MatchState
@@ -139,8 +160,9 @@ private:
 	std::string initialAutoSaveReplay; // value of "ranked_autosavereplay_all" before the plugin changed it
 	void ApplyAutoSaveReplays();
 	void RestoreAutoSaveReplays();
-	void HideSpectatorHud(int delay);
-	void HideStatGraphs();
-	void ReadyUp();
-	void JoinSpectators();
+	bool HideSpectatorHud(int delay, bool force = false);
+	bool HideStatGraphs();
+	bool ReadyUp(bool force = false);
+	bool JoinSpectators(bool force = false);
+	bool FocusPlayer(const std::string& uid, const std::string& name);
 };

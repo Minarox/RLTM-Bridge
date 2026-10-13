@@ -41,7 +41,7 @@
 - [x] Join spectator team on new game
 - [ ] Customize replay name
 - [x] Plugin settings
-- [ ] Control the game from the server
+- [x] Control the game from the server
 - [ ] Documentation
 
 ## ⚙️ Configuration
@@ -58,6 +58,7 @@ Every setting is available in the plugin settings window (`F2` > `Plugins` > `We
 | `wsc_min_wait_between_retries` | `500` | Minimum wait between reconnection retries (milliseconds) |
 | `wsc_max_wait_between_retries` | `500` | Maximum wait between reconnection retries (milliseconds) |
 | `wsc_per_message_deflate` | `1` | Compress the messages |
+| `wsc_server_control` | `1` | Allow the server to control the game (see [Commands](#-commands)) |
 | `wsc_entities_interval` | `100` | Interval between two entities updates (milliseconds) |
 | `wsc_auto_spectate` | `1` | Join the spectators when joining a match |
 | `wsc_hide_hud` | `1` | Hide the HUD when spectating |
@@ -79,8 +80,26 @@ Every message sent to the server is a JSON object `{ "topic": "<topic>", "payloa
 - `players` - Players of the match (uid, name, team, car)
 - `entities` - Balls and cars data (speed, location, boost, etc.), sent every `wsc_entities_interval` ms while the match is playing
 - `statistic` - Statistic event of a player (goal, save, demolition, etc.)
+- `response` - Result of a command sent by the server (see below)
 
 The `match`, `players` and `entities` topics are only sent when their payload changes, and are sent again on each (re)connection. A `null` payload means that there is no match anymore.
+
+## 🎮 Commands
+
+The server can control the game by sending `{ "command": "<name>", "payload": { ... }, "id": "<optional>" }`.
+Each command is answered on the `response` topic with `{ "command": "<name>", "id": "<id>", "success": true }`, or `"success": false` and an `"error"` message.
+
+| Command | Payload | Description |
+| --- | --- | --- |
+| `ping` | | Check that the plugin answers |
+| `resync` | | Send the current `match`, `players` and `entities` states again |
+| `spectate` | | Join the spectators |
+| `ready` | | Mark as ready |
+| `hide_hud` | | Hide the spectator HUD |
+| `focus_player` | `{ "uid": "<uid>", "name": "<name>" }` | Focus the spectator camera on a player (`uid` and / or `name`) |
+| `set_setting` | `{ "name": "<cvar>", "value": <value> }` | Change a game setting: `wsc_entities_interval`, `wsc_auto_save_replays`, `wsc_auto_spectate`, `wsc_auto_ready`, `wsc_hide_hud` or `wsc_hide_stat_graphs` |
+
+Only these commands can be executed: an invalid message or command is answered with an error and never reaches the game.
 
 ## 🗂️ Project structure
 
@@ -88,7 +107,7 @@ The `match`, `players` and `entities` topics are only sent when their payload ch
 WSC/
 ├── WSC.h / WSC.cpp        Plugin class, load / unload and game hooks
 ├── Settings/              Cvars, console commands and settings window
-├── WebSocket/             Connection to the server and messages
+├── WebSocket/             Connection to the server, messages and server commands
 └── Game/                  Game data (match, statistics, entities) and actions (HUD, spectator, replays)
 ```
 

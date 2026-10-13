@@ -103,6 +103,7 @@ void WSC::RenderConnection()
 void WSC::RenderWebSocketSettings()
 {
 	RenderCvarCheckbox("Reconnect automatically", Cvars::AutoReconnect, "Reconnect to the server when the connection is lost");
+	RenderCvarCheckbox("Allow server control", Cvars::ServerControl, "Allow the server to send commands (spectator camera, ready, etc.)");
 	RenderCvarCheckbox("Compress messages", Cvars::PerMessageDeflate, "Per message deflate, applied on the next connection");
 	RenderCvarInputInt("Handshake timeout (s)", Cvars::HandshakeTimeout, "Applied on the next connection");
 	RenderCvarInputInt("Ping interval (s)", Cvars::PingInterval, "Applied on the next connection");
