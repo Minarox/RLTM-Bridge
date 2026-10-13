@@ -36,7 +36,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="WSC.cpp">
+    <ClCompile Include="RLTMBridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GuiBase.cpp">
@@ -116,7 +116,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WSC.h">
+    <ClInclude Include="RLTMBridge.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
@@ -178,7 +178,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="WSC.rc">
+    <ResourceCompile Include="RLTMBridge.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

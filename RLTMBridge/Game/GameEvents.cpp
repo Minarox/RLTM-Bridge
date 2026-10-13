@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "WSC.h"
+#include "RLTMBridge.h"
 #include "Game/GameUtils.h"
 
 using namespace GameUtils;
@@ -30,7 +30,7 @@ namespace
 	One-shot messages of the "event" topic: { "type": "<type>", "clock": <seconds remaining>, ... }
 */
 
-void WSC::SendEvent(const std::string& type, json data)
+void RLTMBridge::SendEvent(const std::string& type, json data)
 {
 	if (!data.is_object()) data = json::object();
 	data["type"] = type;
@@ -39,7 +39,7 @@ void WSC::SendEvent(const std::string& type, json data)
 	Send(Topic::Event, data);
 }
 
-void WSC::OnGoal(BallWrapper ball)
+void RLTMBridge::OnGoal(BallWrapper ball)
 {
 	match.inPlay = false;
 	if (!ball) return;
@@ -53,7 +53,7 @@ void WSC::OnGoal(BallWrapper ball)
 	match.pendingGoal.ballY = ball.GetLocation().Y;
 }
 
-void WSC::OnGoalTicker(const std::string& eventName, const json& player)
+void RLTMBridge::OnGoalTicker(const std::string& eventName, const json& player)
 {
 	if (player.is_null()) return;
 
@@ -66,7 +66,7 @@ void WSC::OnGoalTicker(const std::string& eventName, const json& player)
 	else if (eventName == "OwnGoal") match.ownGoalTicker = ticker;
 }
 
-void WSC::SendPendingGoal(bool force)
+void RLTMBridge::SendPendingGoal(bool force)
 {
 	PendingGoal& goal = match.pendingGoal;
 	if (!goal.active) return;
@@ -103,7 +103,7 @@ void WSC::SendPendingGoal(bool force)
 	so a server connected later still receives it: the server deduplicates the results with the guid
 */
 
-void WSC::SendResult()
+void RLTMBridge::SendResult()
 {
 	match.resultPending = false;
 	if (match.resultSent) return;

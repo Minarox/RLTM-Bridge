@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "WSC.h"
+#include "RLTMBridge.h"
 #include "Game/GameUtils.h"
 
 using namespace GameUtils;
@@ -31,7 +31,7 @@ namespace
 	--- Game data ---
 */
 
-ServerWrapper WSC::GetServerWrapper()
+ServerWrapper RLTMBridge::GetServerWrapper()
 {
 	ServerWrapper onlineServer = gameWrapper->GetOnlineGame();
 	if (onlineServer)
@@ -46,12 +46,12 @@ ServerWrapper WSC::GetServerWrapper()
 	return ServerWrapper(0);
 }
 
-bool WSC::IsMatchLive() const
+bool RLTMBridge::IsMatchLive() const
 {
 	return match.started && !match.paused && !match.ended;
 }
 
-void WSC::UpdateMatch(bool countdownStarted)
+void RLTMBridge::UpdateMatch(bool countdownStarted)
 {
 	ServerWrapper server = GetServerWrapper();
 	if (!server) return;
@@ -89,7 +89,7 @@ void WSC::UpdateMatch(bool countdownStarted)
 	Send(Topic::Scoreboard, match.started ? GetScoreboard(server) : json::object());
 }
 
-void WSC::SetReplayState(bool replay)
+void RLTMBridge::SetReplayState(bool replay)
 {
 	if (match.replay == replay) return;
 
@@ -98,7 +98,7 @@ void WSC::SetReplayState(bool replay)
 	UpdateMatch();
 }
 
-json WSC::GetScore(ServerWrapper server)
+json RLTMBridge::GetScore(ServerWrapper server)
 {
 	json score = json::array();
 
@@ -115,7 +115,7 @@ json WSC::GetScore(ServerWrapper server)
 	return score;
 }
 
-json WSC::GetScoreboard(ServerWrapper server)
+json RLTMBridge::GetScoreboard(ServerWrapper server)
 {
 	json scoreboard = json::object();
 
@@ -148,7 +148,7 @@ json WSC::GetScoreboard(ServerWrapper server)
 	return scoreboard;
 }
 
-void WSC::OnStatTicker(void* params)
+void RLTMBridge::OnStatTicker(void* params)
 {
 	ServerWrapper server = GetServerWrapper();
 	if (!server || !params) return;
@@ -185,7 +185,7 @@ void WSC::OnStatTicker(void* params)
 	UpdateMatch();
 }
 
-void WSC::OnTick()
+void RLTMBridge::OnTick()
 {
 	ProcessServerCommands();
 
@@ -231,7 +231,7 @@ void WSC::OnTick()
 	if (!overloaded && IsCvarEnabled(Cvars::SendEntities)) SendEntities(server);
 }
 
-void WSC::SendEntities(ServerWrapper server)
+void RLTMBridge::SendEntities(ServerWrapper server)
 {
 	// Monotonic time of the sample in milliseconds, only the difference between two updates is meaningful (interpolation)
 	const auto time = std::chrono::steady_clock::now().time_since_epoch();
@@ -281,7 +281,7 @@ void WSC::SendEntities(ServerWrapper server)
 	Send(Topic::Entities, payload);
 }
 
-void WSC::SendPlayers(ServerWrapper server)
+void RLTMBridge::SendPlayers(ServerWrapper server)
 {
 	json players = json::array();
 
@@ -303,7 +303,7 @@ void WSC::SendPlayers(ServerWrapper server)
 	Send(Topic::Players, players);
 }
 
-void WSC::SendSpectatorTarget()
+void RLTMBridge::SendSpectatorTarget()
 {
 	// No match: no target (only sent once, the payload is compared with the last one sent)
 	ServerWrapper server = GetServerWrapper();
@@ -340,7 +340,7 @@ void WSC::SendSpectatorTarget()
 }
 
 // Custom name (null if not set in the match settings) and colors of the teams
-json WSC::GetTeams(ServerWrapper server)
+json RLTMBridge::GetTeams(ServerWrapper server)
 {
 	json teams = json::array();
 
@@ -366,7 +366,7 @@ json WSC::GetTeams(ServerWrapper server)
 	return teams;
 }
 
-void WSC::ResetMatch()
+void RLTMBridge::ResetMatch()
 {
 	match = MatchState();
 

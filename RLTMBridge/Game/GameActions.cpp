@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "WSC.h"
+#include "RLTMBridge.h"
 #include "Game/GameUtils.h"
 
 using namespace GameUtils;
@@ -17,7 +17,7 @@ namespace
 	--- Game replays ---
 */
 
-void WSC::ApplyAutoSaveReplays()
+void RLTMBridge::ApplyAutoSaveReplays()
 {
 	CVarWrapper autoSaveReplay = GetCvar(AUTO_SAVE_REPLAY_CVAR);
 	if (!autoSaveReplay) return;
@@ -28,7 +28,7 @@ void WSC::ApplyAutoSaveReplays()
 	autoSaveReplay.setValue(IsCvarEnabled(Cvars::AutoSaveReplays) ? "1" : initialAutoSaveReplay);
 }
 
-void WSC::RestoreAutoSaveReplays()
+void RLTMBridge::RestoreAutoSaveReplays()
 {
 	if (initialAutoSaveReplay.empty()) return;
 
@@ -37,20 +37,20 @@ void WSC::RestoreAutoSaveReplays()
 }
 
 
-std::string WSC::GetReplayName()
+std::string RLTMBridge::GetReplayName()
 {
 	std::lock_guard<std::mutex> lock(replayNameMutex);
 	return replayName;
 }
 
-void WSC::SetReplayName(const std::string& name)
+void RLTMBridge::SetReplayName(const std::string& name)
 {
 	std::lock_guard<std::mutex> lock(replayNameMutex);
 	replayName = name;
 }
 
 // Gives its name to the replay recorded during the match, before it is saved at the end of the match
-bool WSC::ApplyReplayName()
+bool RLTMBridge::ApplyReplayName()
 {
 	const std::string name = GetReplayName();
 	if (name.empty()) return false;
@@ -76,7 +76,7 @@ bool WSC::ApplyReplayName()
 // The actions return false when they can't be done (no match, not spectating, etc.)
 // "force" ignores the cvar enabling the automatic action, used by the server commands
 
-bool WSC::HideSpectatorHud(int delay, bool force)
+bool RLTMBridge::HideSpectatorHud(int delay, bool force)
 {
 	if (!force && !IsCvarEnabled(Cvars::HideHud)) return false;
 
@@ -95,7 +95,7 @@ bool WSC::HideSpectatorHud(int delay, bool force)
 	return true;
 }
 
-bool WSC::RestoreSpectatorHud()
+bool RLTMBridge::RestoreSpectatorHud()
 {
 	ServerWrapper server = GetServerWrapper();
 	if (!server) return false;
@@ -110,7 +110,7 @@ bool WSC::RestoreSpectatorHud()
 	return true;
 }
 
-bool WSC::HideStatGraphs()
+bool RLTMBridge::HideStatGraphs()
 {
 	if (!IsCvarEnabled(Cvars::HideStatGraphs)) return false;
 
@@ -132,7 +132,7 @@ bool WSC::HideStatGraphs()
 	--- Player actions ---
 */
 
-bool WSC::ReadyUp(bool force)
+bool RLTMBridge::ReadyUp(bool force)
 {
 	if (!force && !IsCvarEnabled(Cvars::AutoReady)) return false;
 
@@ -149,7 +149,7 @@ bool WSC::ReadyUp(bool force)
 	return true;
 }
 
-bool WSC::JoinSpectators(bool force)
+bool RLTMBridge::JoinSpectators(bool force)
 {
 	if (!force && !IsCvarEnabled(Cvars::AutoSpectate)) return false;
 
@@ -171,7 +171,7 @@ bool WSC::JoinSpectators(bool force)
 	--- Spectator camera ---
 */
 
-bool WSC::FocusPlayer(const std::string& uid, const std::string& name)
+bool RLTMBridge::FocusPlayer(const std::string& uid, const std::string& name)
 {
 	ServerWrapper server = GetServerWrapper();
 	if (!server) return false;

@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "WSC.h"
+#include "RLTMBridge.h"
 
 namespace
 {
@@ -31,7 +31,7 @@ namespace
 	--- WebSocket ---
 */
 
-void WSC::InitSocket()
+void RLTMBridge::InitSocket()
 {
 	socket.addSubProtocol("json");
 	ConfigureSocket();
@@ -89,7 +89,7 @@ void WSC::InitSocket()
 	});
 }
 
-void WSC::ConfigureSocket()
+void RLTMBridge::ConfigureSocket()
 {
 	if (IsCvarEnabled(Cvars::AutoReconnect)) socket.enableAutomaticReconnection();
 	else socket.disableAutomaticReconnection();
@@ -105,7 +105,7 @@ void WSC::ConfigureSocket()
 	// Identity of this client, sent in the headers of the connection so the server can reject an unknown client
 	const std::string clientName = GetClientName();
 	ix::WebSocketHttpHeaders headers;
-	headers["X-WSC-Client"] = clientName;
+	headers["X-RLTM-Client"] = clientName;
 
 	CVarWrapper token = GetCvar(Cvars::Token);
 	const std::string tokenValue = token ? Protocol::SanitizeHeaderValue(token.getStringValue()) : "";
@@ -120,8 +120,8 @@ void WSC::ConfigureSocket()
 	pluginInfo["client"] = clientName;
 }
 
-// Name of this client for the server: the wsc_client_name cvar, or the name of the computer
-std::string WSC::GetClientName()
+// Name of this client for the server: the rltm_client_name cvar, or the name of the computer
+std::string RLTMBridge::GetClientName()
 {
 	CVarWrapper cvar = GetCvar(Cvars::ClientName);
 	std::string name = cvar ? Protocol::SanitizeHeaderValue(cvar.getStringValue()) : "";
@@ -130,10 +130,10 @@ std::string WSC::GetClientName()
 	const char* computerName = std::getenv("COMPUTERNAME");
 	name = computerName ? Protocol::SanitizeHeaderValue(computerName) : "";
 
-	return name.empty() ? "WSC" : name;
+	return name.empty() ? "RLTM Bridge" : name;
 }
 
-void WSC::Connect()
+void RLTMBridge::Connect()
 {
 	CVarWrapper url = GetCvar(Cvars::Url);
 	if (!url || url.getStringValue().empty())
@@ -152,7 +152,7 @@ void WSC::Connect()
 	LOG("Connecting to {}", url.getStringValue());
 }
 
-void WSC::Disconnect()
+void RLTMBridge::Disconnect()
 {
 	if (!socketRunning) return;
 
@@ -161,7 +161,7 @@ void WSC::Disconnect()
 	SetSocketStatus();
 }
 
-void WSC::Send(Topic topic, const json& payload)
+void RLTMBridge::Send(Topic topic, const json& payload)
 {
 	const std::string topicName = GetTopicName(topic);
 
@@ -185,7 +185,7 @@ void WSC::Send(Topic topic, const json& payload)
 }
 
 // Sends the current state of the game to the server, on (re)connection or when asked by the server
-void WSC::ResendState()
+void RLTMBridge::ResendState()
 {
 	json cache;
 	{
@@ -206,7 +206,7 @@ void WSC::ResendState()
 }
 
 // Statistics shown in the settings window
-void WSC::CountSent(const ix::WebSocketSendInfo& info)
+void RLTMBridge::CountSent(const ix::WebSocketSendInfo& info)
 {
 	if (!info.success) return;
 
@@ -214,7 +214,7 @@ void WSC::CountSent(const ix::WebSocketSendInfo& info)
 	bytesSent += info.wireSize;
 }
 
-void WSC::SetSocketStatus(const std::string& error)
+void RLTMBridge::SetSocketStatus(const std::string& error)
 {
 	std::lock_guard<std::mutex> lock(socketStatusMutex);
 

@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "WSC.h"
+#include "RLTMBridge.h"
 
 #include <algorithm>
 
@@ -28,13 +28,13 @@ namespace
 
 /*
 	--- Settings window ---
-	F2 > Plugins > WebSocket Controller
+	F2 > Plugins > RLTM Bridge
 	Rendered on the render thread: cvars and plugin state are only modified through gameWrapper->Execute
 */
 
-void WSC::RenderSettings()
+void RLTMBridge::RenderSettings()
 {
-	ImGui::TextUnformatted("WebSocket Controller");
+	ImGui::TextUnformatted("RLTM Bridge");
 	ImGui::SameLine();
 	ImGui::TextDisabled("v%s (protocol %d) - by @Minarox", plugin_version, protocol_version);
 
@@ -51,7 +51,7 @@ void WSC::RenderSettings()
 	if (ImGui::CollapsingHeader("Reset")) RenderResetSettings();
 }
 
-void WSC::RenderConnection()
+void RLTMBridge::RenderConnection()
 {
 	RenderCvarInputText("Server URL", Cvars::Url, urlInput, "WebSocket server URL, e.g. ws://localhost:3000 or wss://example.com");
 	RenderCvarInputText("Client name", Cvars::ClientName, clientNameInput, "Name of this computer for the server, to tell the matches apart when several computers are connected (the name of the computer if empty)");
@@ -101,7 +101,7 @@ void WSC::RenderConnection()
 		ImGui::TextColored(COLOR_RED, "Error: %s", lastError.c_str());
 }
 
-void WSC::RenderStatus()
+void RLTMBridge::RenderStatus()
 {
 	ImGui::Text("Messages sent: %llu (%.1f KB)", static_cast<unsigned long long>(messagesSent), bytesSent / 1024.0);
 	ImGui::SameLine();
@@ -131,7 +131,7 @@ void WSC::RenderStatus()
 	}
 }
 
-void WSC::RenderDataSettings()
+void RLTMBridge::RenderDataSettings()
 {
 	RenderHelp("The match, scoreboard, players, events and result are always sent. Disabling a data clears it on the server.");
 
@@ -146,7 +146,7 @@ void WSC::RenderDataSettings()
 	RenderCvarCheckbox("Send the player followed by the camera", Cvars::SendSpectator, "Player watched by the spectator camera, nothing with the free camera (dynamic player overlay)");
 }
 
-void WSC::RenderSpectatorSettings()
+void RLTMBridge::RenderSpectatorSettings()
 {
 	RenderCvarCheckbox("Join the spectators", Cvars::AutoSpectate, "Join the spectators when joining a match");
 
@@ -161,7 +161,7 @@ void WSC::RenderSpectatorSettings()
 	RenderCvarCheckbox("Hide the statistics graphs", Cvars::HideStatGraphs, "Hide the engine statistics graphs (F10)");
 }
 
-void WSC::RenderMatchEndSettings()
+void RLTMBridge::RenderMatchEndSettings()
 {
 	RenderCvarCheckbox("Mark as ready", Cvars::AutoReady, "Mark as ready at the end of the match");
 
@@ -175,7 +175,7 @@ void WSC::RenderMatchEndSettings()
 	}
 }
 
-void WSC::RenderServerControlSettings()
+void RLTMBridge::RenderServerControlSettings()
 {
 	RenderHelp("The server can send commands to the game. Only the commands below can be executed, an invalid command is rejected.");
 
@@ -190,7 +190,7 @@ void WSC::RenderServerControlSettings()
 	}
 }
 
-void WSC::RenderWebSocketSettings()
+void RLTMBridge::RenderWebSocketSettings()
 {
 	RenderCvarCheckbox("Reconnect automatically", Cvars::AutoReconnect, "Reconnect to the server when the connection is lost");
 	RenderCvarCheckbox("Compress messages", Cvars::PerMessageDeflate, "Per message deflate, applied on the next connection");
@@ -201,7 +201,7 @@ void WSC::RenderWebSocketSettings()
 	RenderCvarCheckbox("Debug mode", Cvars::Debug, "Log the messages sent to and received from the server in the BakkesMod console (F6), except the entities");
 }
 
-void WSC::RenderResetSettings()
+void RLTMBridge::RenderResetSettings()
 {
 	if (ImGui::Button("Reset all the settings")) ImGui::OpenPopup("Reset the settings");
 
@@ -228,7 +228,7 @@ void WSC::RenderResetSettings()
 */
 
 // Returns the current value, to show the sub-settings of an enabled setting
-bool WSC::RenderCvarCheckbox(const char* label, const char* cvarName, const char* tooltip)
+bool RLTMBridge::RenderCvarCheckbox(const char* label, const char* cvarName, const char* tooltip)
 {
 	CVarWrapper cvar = GetCvar(cvarName);
 	if (!cvar) return false;
@@ -240,7 +240,7 @@ bool WSC::RenderCvarCheckbox(const char* label, const char* cvarName, const char
 	return value;
 }
 
-void WSC::RenderCvarInputInt(const char* label, const char* cvarName, const char* tooltip)
+void RLTMBridge::RenderCvarInputInt(const char* label, const char* cvarName, const char* tooltip)
 {
 	CVarWrapper cvar = GetCvar(cvarName);
 	if (!cvar) return;
@@ -252,7 +252,7 @@ void WSC::RenderCvarInputInt(const char* label, const char* cvarName, const char
 }
 
 // Slider of a cvar, applied when the slider is released (the cvars are saved to the disk on each change)
-void WSC::RenderCvarSliderInt(const char* label, const char* cvarName, IntInput& input, int min, int max, const char* format, const char* tooltip)
+void RLTMBridge::RenderCvarSliderInt(const char* label, const char* cvarName, IntInput& input, int min, int max, const char* format, const char* tooltip)
 {
 	CVarWrapper cvar = GetCvar(cvarName);
 	if (!cvar) return;
@@ -267,7 +267,7 @@ void WSC::RenderCvarSliderInt(const char* label, const char* cvarName, IntInput&
 }
 
 // Text input of a cvar, applied when the input loses focus
-void WSC::RenderCvarInputText(const char* label, const char* cvarName, TextInput& input, const char* tooltip, ImGuiInputTextFlags flags)
+void RLTMBridge::RenderCvarInputText(const char* label, const char* cvarName, TextInput& input, const char* tooltip, ImGuiInputTextFlags flags)
 {
 	CVarWrapper cvar = GetCvar(cvarName);
 	if (!cvar) return;

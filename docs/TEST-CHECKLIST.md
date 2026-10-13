@@ -10,16 +10,16 @@ Coche au fur et à mesure (`[x]`), et note les écarts sous chaque point.
 
 ## 0. Préparation
 
-- [ ] Activer les GitHub Actions (*Settings → Actions → General → Allow all actions*), puis pousser un commit (ou relancer le dernier run) : les jobs **test** et **build** doivent être verts, et l'artefact `WSCPlugin` doit contenir `WSCPlugin.dll`.
-- [ ] Ou compiler en local : Visual Studio 2022, `WSC.sln`, configuration `Release | x64`. Aucune erreur, la DLL est dans `plugins/`.
-- [ ] Installer la DLL dans BakkesMod (le build local le fait via le post-build, sinon copier `WSCPlugin.dll` dans `bakkesmod/plugins/` et `plugin load wscplugin` dans la console F6).
+- [ ] Activer les GitHub Actions (*Settings → Actions → General → Allow all actions*), puis pousser un commit (ou relancer le dernier run) : les jobs **test** et **build** doivent être verts, et l'artefact `RLTMBridge` doit contenir `RLTMBridge.dll`.
+- [ ] Ou compiler en local : Visual Studio 2022, `RLTMBridge.sln`, configuration `Release | x64`. Aucune erreur, la DLL est dans `plugins/`.
+- [ ] Installer la DLL dans BakkesMod (le build local le fait via le post-build, sinon copier `RLTMBridge.dll` dans `bakkesmod/plugins/` et `plugin load rltmbridge` dans la console F6).
 - [ ] Lancer le serveur de test : `pip install websockets` puis `python tools/test_server.py` (tape `help` pour les commandes). Il affiche tout ce que le plugin envoie, et résume les `entities`/`stats` toutes les 5 s (`--all` pour tout voir).
-- [ ] Activer le mode debug pendant les tests : `wsc_debug 1` dans la console F6 (ou *Advanced WebSocket settings → Debug mode*). La console affiche alors chaque message envoyé et reçu.
+- [ ] Activer le mode debug pendant les tests : `rltm_debug 1` dans la console F6 (ou *Advanced WebSocket settings → Debug mode*). La console affiche alors chaque message envoyé et reçu.
 
 ## 1. Chargement et connexion
 
-- [ ] La console affiche `WSC plugin v1.0.0.x loaded`, sans erreur.
-- [ ] F2 → Plugins → WebSocket Controller : la fenêtre s'affiche avec les sections *Status*, *Data sent to the server*, *Spectator*, *End of the match*, *Server control*, *Advanced WebSocket settings*, *Reset*.
+- [ ] La console affiche `RLTM Bridge v1.0.0.x loaded`, sans erreur.
+- [ ] F2 → Plugins → RLTM Bridge : la fenêtre s'affiche avec les sections *Status*, *Data sent to the server*, *Spectator*, *End of the match*, *Server control*, *Advanced WebSocket settings*, *Reset*.
 - [ ] Bouton **Connect** : l'état passe à **Connected** (vert) avec l'heure. Le serveur de test affiche `Client connected: <nom du PC> (Authorization: no, subprotocol: json)`, puis le message `plugin` avec `version`, `protocol: 2` et `client`.
 - [ ] **Client name** : saisir `PC-TEST` puis cliquer ailleurs : le plugin se reconnecte et le serveur affiche `Client connected: PC-TEST`.
 - [ ] **Token** : relancer le serveur avec `--token SECRET`. Sans jeton → le serveur refuse (`Rejected client`), la console affiche `WebSocket connection closed: Invalid token (4001)` et le plugin retente régulièrement. Saisir `SECRET` dans *Token* (les caractères doivent être masqués) → connexion acceptée (`Authorization: yes`).
@@ -32,7 +32,7 @@ Coche au fur et à mesure (`[x]`), et note les écarts sous chaque point.
 
 ## 2. Réglages
 
-- [ ] Chaque case à cocher change la cvar correspondante (vérifier dans F6, ex. `wsc_hide_hud`) et **reste après un redémarrage du jeu** (fichier `bakkesmod/cfg/wsc.cfg`).
+- [ ] Chaque case à cocher change la cvar correspondante (vérifier dans F6, ex. `rltm_hide_hud`) et **reste après un redémarrage du jeu** (fichier `bakkesmod/cfg/rltm_bridge.cfg`).
 - [ ] Les sous-options n'apparaissent que si l'option parente est cochée (intervalle des entités, éléments du HUD, nom du replay, groupes de commandes).
 - [ ] Curseur **Update interval** : la valeur n'est appliquée qu'au relâchement (pas de saccade du jeu pendant le glissement), entre 16 et 1000 ms.
 - [ ] **Replay name** : l'aperçu suit le format saisi (ex. `{game} - {blue} vs {orange}` → `1 - Blue Team vs Orange Team`).
@@ -113,7 +113,7 @@ Le plugin suppose que le jeu envoie **deux fois** chaque événement de stat («
 - [ ] Décocher **Hide the HUD** pendant le match : le HUD revient immédiatement.
 - [ ] **Hide the statistics graphs** : les graphes F10 ne s'affichent pas ⚠️ (niveau 6 : vérifier qu'il masque bien les graphes).
 - [ ] **Mark as ready** : à la fin du match, le plugin se marque prêt automatiquement.
-- [ ] **Save the replay** : le replay est sauvegardé automatiquement à la fin de chaque match. Au déchargement du plugin (`plugin unload wscplugin`), `ranked_autosavereplay_all` reprend sa valeur d'avant.
+- [ ] **Save the replay** : le replay est sauvegardé automatiquement à la fin de chaque match. Au déchargement du plugin (`plugin unload rltmbridge`), `ranked_autosavereplay_all` reprend sa valeur d'avant.
 
 ## 11. Nom des replays ⚠️
 
@@ -132,14 +132,14 @@ Chaque commande doit recevoir un `response`. **Aucune ne doit faire planter ou s
 - [ ] `resync` → tous les états sont renvoyés.
 - [ ] `spectate`, `ready`, `hide_hud` → effet visible dans le jeu, `success: true` (et une erreur claire hors match).
 - [ ] `focus <nom d'un joueur>` → la caméra suit ce joueur ⚠️ (`SetFocusActor` avec le pseudo). Avec un nom inconnu → `success: false`.
-- [ ] `set wsc_hide_hud 0` → réglage appliqué ; `set wsc_url ws://x` → refusé (réglage de connexion).
+- [ ] `set rltm_hide_hud 0` → réglage appliqué ; `set rltm_url ws://x` → refusé (réglage de connexion).
 - [ ] Décocher chaque groupe dans *Server control* → les commandes du groupe sont refusées avec `is disabled in the plugin settings`. Décocher *Allow the server to send commands* → tout est refusé.
 - [ ] `bad` (JSON invalide), `unknown` (commande inconnue), `deep` (JSON trop profond), `big` (message de 20 Ko) → réponses d'erreur, aucun crash.
 - [ ] `flood` (200 commandes d'un coup) → environ 64 réponses `success`, les autres `Too many pending commands`, **sans saccade**.
 
 ## 13. Stabilité
 
-- [ ] Décharger/recharger le plugin **pendant un match** (`plugin unload wscplugin` puis `plugin load wscplugin`) : aucun crash, les données reprennent.
+- [ ] Décharger/recharger le plugin **pendant un match** (`plugin unload rltmbridge` puis `plugin load rltmbridge`) : aucun crash, les données reprennent.
 - [ ] Alt-Tab pendant un match, puis retour : pas de valeurs aberrantes dans `stats` (les images de plus de 0,1 s ne sont pas comptées).
 - [ ] Enchaîner plusieurs matchs : chaque match repart de zéro (`scoreboard`, `stats`), un `result` par match.
 - [ ] Un match complet avec le debug désactivé : FPS stables, pas d'augmentation continue de la mémoire du jeu.

@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "WSC.h"
+#include "RLTMBridge.h"
 #include "Game/GameUtils.h"
 
 using namespace GameUtils;
@@ -22,7 +22,7 @@ namespace
 	more precise than what the server could compute from the entities updates
 */
 
-void WSC::UpdateAdvancedStats(ServerWrapper server)
+void RLTMBridge::UpdateAdvancedStats(ServerWrapper server)
 {
 	const auto now = std::chrono::steady_clock::now();
 	const double frameSeconds = std::min(std::chrono::duration<double>(now - match.lastStatsUpdate).count(), MAX_FRAME_SECONDS);
@@ -71,7 +71,7 @@ void WSC::UpdateAdvancedStats(ServerWrapper server)
 	}
 }
 
-json WSC::GetAdvancedStats(ServerWrapper server)
+json RLTMBridge::GetAdvancedStats(ServerWrapper server)
 {
 	json payload = json::object();
 

@@ -4,6 +4,6 @@
 set -e
 cd "$(dirname "$0")/.."
 mkdir -p build/tests
-${CXX:-g++} -std=c++17 -Wall -Wextra -Werror -DFMT_HEADER_ONLY $CXXFLAGS -IWSC -IWSC/fmt/include \
-	tests/ProtocolTests.cpp WSC/Protocol/Protocol.cpp -o build/tests/ProtocolTests
+${CXX:-g++} -std=c++17 -Wall -Wextra -Werror -DFMT_HEADER_ONLY $CXXFLAGS -IRLTMBridge -IRLTMBridge/fmt/include \
+	tests/ProtocolTests.cpp RLTMBridge/Protocol/Protocol.cpp -o build/tests/ProtocolTests
 ./build/tests/ProtocolTests

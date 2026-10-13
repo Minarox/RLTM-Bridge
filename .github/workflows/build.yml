@@ -26,7 +26,7 @@ jobs:
 
     env:
       # Build number of the DLL version, written in version.h by update_version.ps1
-      WSC_BUILD_NUMBER: ${{ github.run_number }}
+      RLTM_BRIDGE_BUILD_NUMBER: ${{ github.run_number }}
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-cache
 
     steps:
@@ -57,13 +57,13 @@ jobs:
 
       - name: Build
         # Environment=GitHub skips the BakkesMod patch post build step
-        run: msbuild /m /p:Configuration=Release /p:Platform=x64 "/p:BakkesModPath=$env:GITHUB_WORKSPACE\bakkesmod" /p:Environment=GitHub plugin\WSC.sln
+        run: msbuild /m /p:Configuration=Release /p:Platform=x64 "/p:BakkesModPath=$env:GITHUB_WORKSPACE\bakkesmod" /p:Environment=GitHub plugin\RLTMBridge.sln
 
       - name: Upload plugin
         uses: actions/upload-artifact@v4
         with:
-          name: WSCPlugin
-          path: plugin\plugins\WSCPlugin.dll
+          name: RLTMBridge
+          path: plugin\plugins\RLTMBridge.dll
           if-no-files-found: error
 
   release:
@@ -78,9 +78,9 @@ jobs:
       - name: Download plugin
         uses: actions/download-artifact@v4
         with:
-          name: WSCPlugin
+          name: RLTMBridge
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: WSCPlugin.dll
+          files: RLTMBridge.dll

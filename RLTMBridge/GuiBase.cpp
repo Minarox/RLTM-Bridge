@@ -1,9 +1,10 @@
 #include "pch.h"
 #include "GuiBase.h"
 
+// Name of the tab of the plugin in the BakkesMod settings (F2 > Plugins)
 std::string SettingsWindowBase::GetPluginName()
 {
-	return "WebSocketController";
+	return "RLTM Bridge";
 }
 
 void SettingsWindowBase::SetImGuiContext(uintptr_t ctx)
@@ -13,7 +14,7 @@ void SettingsWindowBase::SetImGuiContext(uintptr_t ctx)
 
 std::string PluginWindowBase::GetMenuName()
 {
-	return "WebSocketController";
+	return "RLTMBridge";
 }
 
 std::string PluginWindowBase::GetMenuTitle()

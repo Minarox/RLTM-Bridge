@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "WSC.h"
+#include "RLTMBridge.h"
 
-BAKKESMOD_PLUGIN(WSC, "WebSocket Controller", plugin_version, PLUGINTYPE_SPECTATOR)
+BAKKESMOD_PLUGIN(RLTMBridge, "RLTM Bridge", plugin_version, PLUGINTYPE_SPECTATOR)
 
 std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 
@@ -9,7 +9,7 @@ std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 	--- Boilerplate ---
 */
 
-void WSC::onLoad()
+void RLTMBridge::onLoad()
 {
 	_globalCvarManager = cvarManager;
 
@@ -35,10 +35,10 @@ void WSC::onLoad()
 		if (IsCvarEnabled(Cvars::AutoConnect)) Connect();
 	}, 0.5f);
 
-	LOG("WSC plugin v{} loaded", plugin_version);
+	LOG("RLTM Bridge v{} loaded", plugin_version);
 }
 
-void WSC::onUnload()
+void RLTMBridge::onUnload()
 {
 	UnhookEvents();
 
@@ -51,7 +51,7 @@ void WSC::onUnload()
 	// Required for ixwebsocket
 	ix::uninitNetSystem();
 
-	LOG("WSC plugin unloaded");
+	LOG("RLTM Bridge unloaded");
 }
 
 
@@ -59,7 +59,7 @@ void WSC::onUnload()
 	--- Hooks ---
 */
 
-void WSC::HookEvents()
+void RLTMBridge::HookEvents()
 {
 	// Match data
 	for (const char* eventName : {
@@ -122,7 +122,7 @@ void WSC::HookEvents()
 	Hook("Function TAGame.GameEvent_Soccar_TA.BeginHighlightsReplay", [this]() { ReadyUp(); });
 }
 
-void WSC::UnhookEvents()
+void RLTMBridge::UnhookEvents()
 {
 	for (const HookedEvent& event : hookedEvents)
 	{
@@ -133,7 +133,7 @@ void WSC::UnhookEvents()
 	hookedEvents.clear();
 }
 
-void WSC::Hook(const std::string& eventName, std::function<void()> callback, bool post)
+void RLTMBridge::Hook(const std::string& eventName, std::function<void()> callback, bool post)
 {
 	auto hookCallback = [callback = std::move(callback)](std::string) { callback(); };
 

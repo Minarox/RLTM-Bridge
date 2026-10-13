@@ -1,13 +1,13 @@
 #include "pch.h"
-#include "WSC.h"
+#include "RLTMBridge.h"
 
 /*
 	--- Cvars ---
 */
 
-void WSC::RegisterCvars()
+void RLTMBridge::RegisterCvars()
 {
-	persistentStorage = std::make_shared<PersistentStorage>(this, "wsc", true, true);
+	persistentStorage = std::make_shared<PersistentStorage>(this, "rltm_bridge", true, true);
 
 	auto onSocketSettingChanged = [this](std::string oldValue, CVarWrapper cvar) { ConfigureSocket(); };
 
@@ -80,18 +80,18 @@ void WSC::RegisterCvars()
 	persistentStorage->RegisterPersistentCvar(Cvars::ReplayNameFormat, "{blue} vs {orange} - Match {game}", "Name of the replays sent by the server, with {blue}, {orange} and {game}");
 }
 
-CVarWrapper WSC::GetCvar(const char* name)
+CVarWrapper RLTMBridge::GetCvar(const char* name)
 {
 	return cvarManager->getCvar(name);
 }
 
-bool WSC::IsCvarEnabled(const char* name)
+bool RLTMBridge::IsCvarEnabled(const char* name)
 {
 	CVarWrapper cvar = GetCvar(name);
 	return cvar && cvar.getBoolValue();
 }
 
-void WSC::SetCvarFromUI(const char* name, const std::string& value)
+void RLTMBridge::SetCvarFromUI(const char* name, const std::string& value)
 {
 	// The settings window is rendered on another thread, apply the change on the game thread
 	gameWrapper->Execute([this, name, value](GameWrapper*) {
@@ -101,7 +101,7 @@ void WSC::SetCvarFromUI(const char* name, const std::string& value)
 }
 
 
-void WSC::ResetCvars()
+void RLTMBridge::ResetCvars()
 {
 	for (const char* name : Cvars::All)
 	{
@@ -117,17 +117,17 @@ void WSC::ResetCvars()
 	--- Notifiers ---
 */
 
-void WSC::RegisterNotifiers()
+void RLTMBridge::RegisterNotifiers()
 {
-	cvarManager->registerNotifier("wsc_version", [this](std::vector<std::string> args) {
-		LOG("WSC plugin version: {}", plugin_version);
+	cvarManager->registerNotifier("rltm_version", [this](std::vector<std::string> args) {
+		LOG("RLTM Bridge version: {}", plugin_version);
 	}, "Show the plugin version", PERMISSION_ALL);
 
-	cvarManager->registerNotifier("wsc_connect", [this](std::vector<std::string> args) {
+	cvarManager->registerNotifier("rltm_connect", [this](std::vector<std::string> args) {
 		Connect();
 	}, "Connect to the WebSocket server", PERMISSION_ALL);
 
-	cvarManager->registerNotifier("wsc_disconnect", [this](std::vector<std::string> args) {
+	cvarManager->registerNotifier("rltm_disconnect", [this](std::vector<std::string> args) {
 		Disconnect();
 	}, "Disconnect from the WebSocket server", PERMISSION_ALL);
 }

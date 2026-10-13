@@ -1,6 +1,6 @@
-# Instructions : mettre à jour RLTM pour le protocole v2 du plugin WSC
+# Instructions : mettre à jour RLTM pour le protocole v2 du plugin RLTM Bridge
 
-Ce fichier est destiné à une session Claude qui travaille sur **RLTM**, le serveur WebSocket qui reçoit les données du plugin BakkesMod **WSC** (dépôt `Minarox/WSC-Plugin`, branche `dev`) pour les overlays OBS et la gestion de tournois.
+Ce fichier est destiné à une session Claude qui travaille sur **RLTM**, le serveur WebSocket qui reçoit les données du plugin BakkesMod **RLTM Bridge**, anciennement WSC (dépôt `Minarox/RLTM-Bridge`, branche `dev`), pour les overlays OBS et la gestion de tournois.
 
 Le format des messages du plugin a changé. Ta mission : adapter RLTM à ce nouveau format (**protocole v2**), sans casser les overlays existants.
 
@@ -9,7 +9,7 @@ Le format des messages du plugin a changé. Ta mission : adapter RLTM à ce nouv
 1. Explore RLTM et repère tout le code qui reçoit ou utilise les messages du plugin. Cherche les topics `match`, `players`, `entities`, `statistic`, les champs `statistics`, `asFlip`, et les clés de joueur `"<uid>|<name>"`.
 2. Fais la liste des fichiers concernés (serveur, stores, overlays, tests) avant de modifier quoi que ce soit.
 3. Si le serveur utilise la librairie Node `ws`, vérifie l'option `perMessageDeflate`. Elle est désactivée par défaut côté serveur alors que le plugin propose la compression. L'activer divise par ~10 la taille des messages sur le réseau.
-4. En cas de doute sur un comportement du plugin, la référence est le code de `Minarox/WSC-Plugin` (branche `dev`) : `WSC/Game/GameData.cpp` (données envoyées), `WSC/WebSocket/WebSocket.cpp` (envoi) et `WSC/WebSocket/ServerCommands.cpp` (commandes).
+4. En cas de doute sur un comportement du plugin, la référence est le code de `Minarox/RLTM-Bridge` (branche `dev`) : `RLTMBridge/Game/GameData.cpp` (données envoyées), `RLTMBridge/WebSocket/WebSocket.cpp` (envoi) et `RLTMBridge/WebSocket/ServerCommands.cpp` (commandes).
 
 ## Ce qui change (v1 → v2)
 
@@ -27,9 +27,10 @@ Le format des messages du plugin a changé. Ta mission : adapter RLTM à ce nouv
 | 10 | Nouveau topic **`stats`** : statistiques avancées (boost, supersonique, temps au sol/au mur/en l'air, vitesse moyenne) | Nouveau : stats de tournoi |
 | 11 | Nouveau topic **`event`** : `kickoff`, `goal` (buteur, passeur, vitesse), `overtime`, `replayStart`, `replayEnd`, `matchEnded`, `podium` | Nouveau : animations des overlays |
 | 12 | Nouveau topic **`result`** : résultat complet de la partie, envoyé une fois à la fin | Nouveau : **à utiliser pour enregistrer les résultats de tournoi** |
-| 13 | Le message `plugin` contient le nom du client (`client`), et la connexion porte les en-têtes `X-WSC-Client` et `Authorization: Bearer <jeton>` | Nouveau : identifier chaque PC, refuser un client inconnu |
+| 13 | Le message `plugin` contient le nom du client (`client`), et la connexion porte les en-têtes `X-RLTM-Client` et `Authorization: Bearer <jeton>` | Nouveau : identifier chaque PC, refuser un client inconnu |
+| 14 | Le plugin s'appelle désormais **RLTM Bridge** (anciennement WSC) : en-tête `X-RLTM-Client` (et non `X-WSC-Client`), réglages `rltm_*` (et non `wsc_*`), dépôt `Minarox/RLTM-Bridge` | À prendre en compte dans les textes et les noms de réglages envoyés avec `set_setting` |
 
-Un plugin v1 n'envoie jamais de message `plugin`. Si des messages arrivent sans `plugin` préalable, c'est un ancien plugin : affiche un avertissement clair (« plugin WSC trop ancien, mettez-le à jour »). Ne cherche pas à gérer les deux formats.
+Un plugin v1 n'envoie jamais de message `plugin`. Si des messages arrivent sans `plugin` préalable, c'est un ancien plugin : affiche un avertissement clair (« plugin RLTM Bridge trop ancien, mettez-le à jour »). Ne cherche pas à gérer les deux formats.
 
 ## Format complet des messages (plugin → serveur)
 
@@ -44,8 +45,8 @@ Les topics **d'état** (`match`, `scoreboard`, `stats`, `spectator`, `players`, 
 
 ### Identification des clients
 Quand plusieurs matchs se jouent en même temps, chaque PC spectateur a son plugin connecté à RLTM. Pour les distinguer :
-- `client` (dans `plugin`, `result`, et l'en-tête HTTP `X-WSC-Client` de la connexion) est le nom choisi dans le plugin (`wsc_client_name`), ou à défaut le nom de l'ordinateur. **Associe chaque connexion à un client**, puis chaque client à un match du tournoi.
-- Si un jeton est configuré dans le plugin (`wsc_token`), la connexion porte l'en-tête `Authorization: Bearer <jeton>`. RLTM peut refuser la connexion (pendant le handshake) si le jeton est inconnu. Le jeton n'est jamais envoyé dans les messages.
+- `client` (dans `plugin`, `result`, et l'en-tête HTTP `X-RLTM-Client` de la connexion) est le nom choisi dans le plugin (`rltm_client_name`), ou à défaut le nom de l'ordinateur. **Associe chaque connexion à un client**, puis chaque client à un match du tournoi.
+- Si un jeton est configuré dans le plugin (`rltm_token`), la connexion porte l'en-tête `Authorization: Bearer <jeton>`. RLTM peut refuser la connexion (pendant le handshake) si le jeton est inconnu. Le jeton n'est jamais envoyé dans les messages.
 
 ### `match`
 ```json
@@ -138,7 +139,7 @@ Envoyé toutes les 100 ms par défaut (réglable côté plugin), seulement penda
 ```
 - `speed` est en km/h, `location` en unités Unreal `[X, Y, Z]`, et `boost` va de 0 à 100.
 - `time` est une horloge monotone en millisecondes : **seule la différence entre deux messages a un sens**. Ne l'affiche pas comme une heure. Pour une minimap fluide, interpole les positions entre les deux derniers échantillons selon le temps écoulé.
-- L'envoi des entités peut être désactivé dans le plugin (`wsc_send_entities`) : le topic vaut alors `null`. Il en va de même pour `spectator` (`wsc_send_spectator`). Un overlay qui en dépend doit afficher un état vide, pas planter.
+- L'envoi des entités peut être désactivé dans le plugin (`rltm_send_entities`) : le topic vaut alors `null`. Il en va de même pour `spectator` (`rltm_send_spectator`). Un overlay qui en dépend doit afficher un état vide, pas planter.
 - Le plugin peut sauter des mises à jour si le serveur ne lit pas assez vite. L'intervalle entre deux messages n'est donc pas garanti : utilise `time`, pas un intervalle supposé.
 
 ### `stats` (nouveau)
@@ -150,7 +151,7 @@ Statistiques avancées calculées par le plugin à chaque image pendant que la b
   "timeOnGround": 180.5, "timeOnWall": 12.1, "timeInAir": 52.7, "averageSpeed": 64
 } } }
 ```
-`boostUsed` est en unités de jauge (100 = un plein), les temps en secondes, `averageSpeed` en km/h. Peut valoir `null` si l'envoi est désactivé dans le plugin (`wsc_send_stats`).
+`boostUsed` est en unités de jauge (100 = un plein), les temps en secondes, `averageSpeed` en km/h. Peut valoir `null` si l'envoi est désactivé dans le plugin (`rltm_send_stats`).
 
 ### `event` (nouveau, événements ponctuels)
 `{ "type": "<type>", "clock": <secondes restantes>, … }` :
@@ -202,7 +203,7 @@ Format : `{ "command": "<nom>", "payload": { ... }, "id": "<optionnel, chaîne o
 | `ready` | | Se marquer prêt |
 | `hide_hud` | | Masquer le HUD spectateur |
 | `focus_player` | `{ "uid": "...", "name": "..." }` (au moins un des deux) | Centrer la caméra spectateur sur un joueur |
-| `set_setting` | `{ "name": "<cvar>", "value": <valeur> }` | Changer un réglage de données, de spectateur ou de fin de match : `wsc_send_entities`, `wsc_entities_interval`, `wsc_send_spectator`, `wsc_auto_spectate`, `wsc_hide_hud`, `wsc_hud_names`, `wsc_hud_match_info`, `wsc_hide_stat_graphs`, `wsc_auto_ready`, `wsc_auto_save_replays`, `wsc_replay_name_format` |
+| `set_setting` | `{ "name": "<cvar>", "value": <valeur> }` | Changer un réglage de données, de spectateur ou de fin de match : `rltm_send_entities`, `rltm_entities_interval`, `rltm_send_spectator`, `rltm_auto_spectate`, `rltm_hide_hud`, `rltm_hud_names`, `rltm_hud_match_info`, `rltm_hide_stat_graphs`, `rltm_auto_ready`, `rltm_auto_save_replays`, `rltm_replay_name_format` |
 | `set_replay_name` | `{ "blue": "<équipe>", "orange": "<équipe>", "game": <numéro> }` ou `{ "name": "<nom complet>" }` | Nommer le replay du match (voir ci-dessous) |
 | `clear_replay_name` | | Revenir au nom par défaut du jeu |
 
@@ -214,15 +215,15 @@ Le jeu ne connaît pas les équipes de RLTM. Pour que chaque replay sauvegardé 
 ```
 - `blue` est l'équipe 0 (bleue) du jeu, `orange` l'équipe 1. RLTM doit donc savoir quelle équipe joue de quel côté : utilise le `teamIndex` des joueurs (`players` / `scoreboard`) pour faire la correspondance avec ses équipes.
 - `game` est le numéro de la partie dans la série : un entier de 1 à 99.
-- Le plugin construit le nom avec sa cvar `wsc_replay_name_format` (par défaut `{blue} vs {orange} - Match {game}`), réglable dans le jeu. Pour imposer un nom complet, envoie `{ "name": "..." }` à la place.
+- Le plugin construit le nom avec sa cvar `rltm_replay_name_format` (par défaut `{blue} vs {orange} - Match {game}`), réglable dans le jeu. Pour imposer un nom complet, envoie `{ "name": "..." }` à la place.
 - Le nom est nettoyé (caractères de contrôle retirés) et limité à 128 octets.
 - **Quand l'envoyer** : dès que les équipes de la partie sont connues, au plus tard pendant la partie. Le nom ne vaut que pour **un seul match** et il est oublié à la fin du match. Envoyé après la fin d'une partie, il s'applique à la partie suivante.
 - Réponse : `"result": { "name": "Équipe 1 vs Équipe 2 - Match 3", "applied": true }`. `applied: false` signifie qu'il n'y a pas de match en cours ou que le match est terminé : le nom sera appliqué au début du match suivant.
-- La sauvegarde automatique des replays (`wsc_auto_save_replays`) doit être activée côté plugin pour que le replay soit enregistré.
+- La sauvegarde automatique des replays (`rltm_auto_save_replays`) doit être activée côté plugin pour que le replay soit enregistré.
 
-**Permissions** : l'utilisateur du plugin peut désactiver toutes les commandes (`wsc_server_control`), ou seulement certains groupes : caméra (`focus_player`), actions (`spectate`, `ready`, `hide_hud`), noms des replays (`set_replay_name`, `clear_replay_name`) et réglages (`set_setting`). Une commande désactivée est refusée avec `success: false` et une erreur du type `Command "focus_player" is disabled in the plugin settings` : affiche-la dans RLTM pour que l'opérateur sache quoi activer. `ping` et `resync` sont toujours autorisées.
+**Permissions** : l'utilisateur du plugin peut désactiver toutes les commandes (`rltm_server_control`), ou seulement certains groupes : caméra (`focus_player`), actions (`spectate`, `ready`, `hide_hud`), noms des replays (`set_replay_name`, `clear_replay_name`) et réglages (`set_setting`). Une commande désactivée est refusée avec `success: false` et une erreur du type `Command "focus_player" is disabled in the plugin settings` : affiche-la dans RLTM pour que l'opérateur sache quoi activer. `ping` et `resync` sont toujours autorisées.
 
-Limites côté plugin : messages de 16 Ko maximum, 32 niveaux d'imbrication maximum, 64 commandes en attente maximum, et toute commande inconnue est refusée. Le joueur peut désactiver toutes les commandes (`wsc_server_control`). Gère donc toujours `success: false`.
+Limites côté plugin : messages de 16 Ko maximum, 32 niveaux d'imbrication maximum, 64 commandes en attente maximum, et toute commande inconnue est refusée. Le joueur peut désactiver toutes les commandes (`rltm_server_control`). Gère donc toujours `success: false`.
 
 Une idée de fonctionnalité si RLTM a une interface de régie : boutons « caméra sur ce joueur » (`focus_player`) et indicateur de connexion (`ping` régulier avec un `id`).
 

@@ -1,4 +1,4 @@
-// Unit tests of the messages format (WSC/Protocol), run by the CI: tests/run.sh
+// Unit tests of the messages format (RLTMBridge/Protocol), run by the CI: tests/run.sh
 #include <cmath>
 #include <functional>
 #include <iostream>

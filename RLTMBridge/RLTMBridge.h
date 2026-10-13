@@ -34,42 +34,42 @@ constexpr int protocol_version = 2;
 namespace Cvars
 {
 	// WebSocket
-	inline constexpr const char* Url = "wsc_url";
-	inline constexpr const char* ClientName = "wsc_client_name";
-	inline constexpr const char* Token = "wsc_token";
-	inline constexpr const char* AutoConnect = "wsc_auto_connect";
-	inline constexpr const char* AutoReconnect = "wsc_auto_reconnect";
-	inline constexpr const char* HandshakeTimeout = "wsc_handshake_timeout";
-	inline constexpr const char* MinWaitBetweenRetries = "wsc_min_wait_between_retries";
-	inline constexpr const char* MaxWaitBetweenRetries = "wsc_max_wait_between_retries";
-	inline constexpr const char* PerMessageDeflate = "wsc_per_message_deflate";
-	inline constexpr const char* PingInterval = "wsc_ping_interval";
-	inline constexpr const char* Debug = "wsc_debug";
+	inline constexpr const char* Url = "rltm_url";
+	inline constexpr const char* ClientName = "rltm_client_name";
+	inline constexpr const char* Token = "rltm_token";
+	inline constexpr const char* AutoConnect = "rltm_auto_connect";
+	inline constexpr const char* AutoReconnect = "rltm_auto_reconnect";
+	inline constexpr const char* HandshakeTimeout = "rltm_handshake_timeout";
+	inline constexpr const char* MinWaitBetweenRetries = "rltm_min_wait_between_retries";
+	inline constexpr const char* MaxWaitBetweenRetries = "rltm_max_wait_between_retries";
+	inline constexpr const char* PerMessageDeflate = "rltm_per_message_deflate";
+	inline constexpr const char* PingInterval = "rltm_ping_interval";
+	inline constexpr const char* Debug = "rltm_debug";
 
 	// Server control
-	inline constexpr const char* ServerControl = "wsc_server_control";
-	inline constexpr const char* ServerAllowCamera = "wsc_server_allow_camera";
-	inline constexpr const char* ServerAllowActions = "wsc_server_allow_actions";
-	inline constexpr const char* ServerAllowReplayName = "wsc_server_allow_replay_name";
-	inline constexpr const char* ServerAllowSettings = "wsc_server_allow_settings";
+	inline constexpr const char* ServerControl = "rltm_server_control";
+	inline constexpr const char* ServerAllowCamera = "rltm_server_allow_camera";
+	inline constexpr const char* ServerAllowActions = "rltm_server_allow_actions";
+	inline constexpr const char* ServerAllowReplayName = "rltm_server_allow_replay_name";
+	inline constexpr const char* ServerAllowSettings = "rltm_server_allow_settings";
 
 	// Data
-	inline constexpr const char* SendEntities = "wsc_send_entities";
-	inline constexpr const char* EntitiesInterval = "wsc_entities_interval";
-	inline constexpr const char* SendSpectator = "wsc_send_spectator";
-	inline constexpr const char* SendStats = "wsc_send_stats";
+	inline constexpr const char* SendEntities = "rltm_send_entities";
+	inline constexpr const char* EntitiesInterval = "rltm_entities_interval";
+	inline constexpr const char* SendSpectator = "rltm_send_spectator";
+	inline constexpr const char* SendStats = "rltm_send_stats";
 
 	// Spectator
-	inline constexpr const char* AutoSpectate = "wsc_auto_spectate";
-	inline constexpr const char* HideHud = "wsc_hide_hud";
-	inline constexpr const char* HudNames = "wsc_hud_names";
-	inline constexpr const char* HudMatchInfo = "wsc_hud_match_info";
-	inline constexpr const char* HideStatGraphs = "wsc_hide_stat_graphs";
+	inline constexpr const char* AutoSpectate = "rltm_auto_spectate";
+	inline constexpr const char* HideHud = "rltm_hide_hud";
+	inline constexpr const char* HudNames = "rltm_hud_names";
+	inline constexpr const char* HudMatchInfo = "rltm_hud_match_info";
+	inline constexpr const char* HideStatGraphs = "rltm_hide_stat_graphs";
 
 	// Match end
-	inline constexpr const char* AutoReady = "wsc_auto_ready";
-	inline constexpr const char* AutoSaveReplays = "wsc_auto_save_replays";
-	inline constexpr const char* ReplayNameFormat = "wsc_replay_name_format";
+	inline constexpr const char* AutoReady = "rltm_auto_ready";
+	inline constexpr const char* AutoSaveReplays = "rltm_auto_save_replays";
+	inline constexpr const char* ReplayNameFormat = "rltm_replay_name_format";
 
 	// Every cvar of the plugin (reset to the default values)
 	inline constexpr const char* All[] = {
@@ -97,10 +97,10 @@ enum class Topic
 	Response
 };
 
-class WSC: public BakkesMod::Plugin::BakkesModPlugin, public SettingsWindowBase
+class RLTMBridge: public BakkesMod::Plugin::BakkesModPlugin, public SettingsWindowBase
 {
 public:
-	// Boilerplate (WSC.cpp)
+	// Boilerplate (RLTMBridge.cpp)
 	void onLoad() override;
 	void onUnload() override;
 
@@ -108,7 +108,7 @@ public:
 	void RenderSettings() override;
 
 private:
-	// Hooks (WSC.cpp)
+	// Hooks (RLTMBridge.cpp)
 	struct HookedEvent
 	{
 		std::string name;
@@ -165,7 +165,7 @@ private:
 	std::mutex socketStatusMutex;
 	std::string socketLastError;
 	std::chrono::system_clock::time_point socketStatusSince = std::chrono::system_clock::now();
-	std::atomic<bool> debug = false; // Copy of the wsc_debug cvar, read from every thread
+	std::atomic<bool> debug = false; // Copy of the rltm_debug cvar, read from every thread
 	std::atomic<uint64_t> messagesSent = 0;
 	std::atomic<uint64_t> bytesSent = 0; // On the network, after compression
 	std::mutex pluginInfoMutex;

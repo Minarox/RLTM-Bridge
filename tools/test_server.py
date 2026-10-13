@@ -1,4 +1,4 @@
-"""WebSocket server to test the WSC plugin without RLTM (see docs/TEST-CHECKLIST.md).
+"""WebSocket server to test the RLTM Bridge plugin without RLTM (see docs/TEST-CHECKLIST.md).
 
 Shows the messages of the plugin and sends commands typed in the terminal.
 
@@ -48,7 +48,7 @@ def show(text):
 async def handler(websocket):
     request = getattr(websocket, "request", None)
     headers = request.headers if request is not None else websocket.request_headers
-    client = headers.get("X-WSC-Client", "?")
+    client = headers.get("X-RLTM-Client", "?")
     authorization = headers.get("Authorization", "")
 
     if args.token and authorization != f"Bearer {args.token}":
@@ -163,7 +163,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="WebSocket server to test the WSC plugin")
+    parser = argparse.ArgumentParser(description="WebSocket server to test the RLTM Bridge plugin")
     parser.add_argument("--port", type=int, default=3000)
     parser.add_argument("--token", help="Reject the clients without this token")
     parser.add_argument("--all", action="store_true", help="Show every entities and stats message")

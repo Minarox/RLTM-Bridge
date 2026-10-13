@@ -24,12 +24,12 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "FileDescription", "WebSocket Controller plugin for BakkesMod"
+            VALUE "FileDescription", "RLTM Bridge plugin for BakkesMod"
             VALUE "FileVersion", stringify(VERSION_MAJOR) "." stringify(VERSION_MINOR) "." stringify(VERSION_PATCH) "." stringify(VERSION_BUILD)
-            VALUE "InternalName", "WSCPlugin.dll"
+            VALUE "InternalName", "RLTMBridge.dll"
             VALUE "LegalCopyright", "Copyright (C) 2025 Mathis Serrieres Maniecki"
-            VALUE "OriginalFilename", "WSCPlugin.dll"
-            VALUE "ProductName", "WebSocket Controller"
+            VALUE "OriginalFilename", "RLTMBridge.dll"
+            VALUE "ProductName", "RLTM Bridge"
             VALUE "ProductVersion", stringify(VERSION_MAJOR) "." stringify(VERSION_MINOR) "." stringify(VERSION_PATCH) "." stringify(VERSION_BUILD)
         END
     END

@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "WSC.h"
+#include "RLTMBridge.h"
 
 #include <algorithm>
 
@@ -47,12 +47,12 @@ namespace
 	};
 }
 
-void WSC::RegisterServerCommand(const std::string& name, const char* permission, CommandHandler handler)
+void RLTMBridge::RegisterServerCommand(const std::string& name, const char* permission, CommandHandler handler)
 {
 	commandHandlers[name] = RegisteredCommand{ permission, std::move(handler) };
 }
 
-void WSC::RegisterServerCommands()
+void RLTMBridge::RegisterServerCommands()
 {
 	RegisterServerCommand("ping", nullptr, [](const json& payload) -> json { return nullptr; });
 
@@ -103,7 +103,7 @@ void WSC::RegisterServerCommands()
 	});
 
 	// Name of the replay of the current match, or of the next one if the current match is ended
-	// Payload: { "blue": "<team>", "orange": "<team>", "game": <number> } formatted with wsc_replay_name_format,
+	// Payload: { "blue": "<team>", "orange": "<team>", "game": <number> } formatted with rltm_replay_name_format,
 	// or { "name": "<replay name>" } to give the whole name
 	RegisterServerCommand("set_replay_name", Cvars::ServerAllowReplayName, [this](const json& payload) -> json {
 		std::string name = GetOptionalString(payload, "name");
@@ -129,8 +129,8 @@ void WSC::RegisterServerCommands()
 	});
 }
 
-// Replay name from the wsc_replay_name_format cvar, also used for the preview of the settings window
-std::string WSC::BuildReplayName(const std::string& blue, const std::string& orange, int game)
+// Replay name from the rltm_replay_name_format cvar, also used for the preview of the settings window
+std::string RLTMBridge::BuildReplayName(const std::string& blue, const std::string& orange, int game)
 {
 	CVarWrapper format = GetCvar(Cvars::ReplayNameFormat);
 
@@ -142,7 +142,7 @@ std::string WSC::BuildReplayName(const std::string& blue, const std::string& ora
 }
 
 // Called from the ixwebsocket thread: only validate and queue the command
-void WSC::OnServerMessage(const std::string& message)
+void RLTMBridge::OnServerMessage(const std::string& message)
 {
 	if (debug) LOG("[debug] Received: {}", message.substr(0, 500));
 
@@ -167,7 +167,7 @@ void WSC::OnServerMessage(const std::string& message)
 }
 
 // Called from the game thread on each tick
-void WSC::ProcessServerCommands()
+void RLTMBridge::ProcessServerCommands()
 {
 	for (int i = 0; i < MAX_COMMANDS_PER_TICK; i++)
 	{
@@ -184,7 +184,7 @@ void WSC::ProcessServerCommands()
 	}
 }
 
-void WSC::ExecuteServerCommand(const ServerCommand& command)
+void RLTMBridge::ExecuteServerCommand(const ServerCommand& command)
 {
 	std::string error;
 	json result;
@@ -222,7 +222,7 @@ void WSC::ExecuteServerCommand(const ServerCommand& command)
 	SendCommandResponse(command.name, command.id, error, error.empty() ? result : json());
 }
 
-void WSC::SendCommandResponse(const std::string& command, const json& id, const std::string& error, const json& result)
+void RLTMBridge::SendCommandResponse(const std::string& command, const json& id, const std::string& error, const json& result)
 {
 	json payload = json::object();
 	payload["command"] = command;

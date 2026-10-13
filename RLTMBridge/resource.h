@@ -1,5 +1,5 @@
 // Microsoft Visual C++ generated include file.
-// Used by WSC.rc
+// Used by RLTMBridge.rc
 
 // Next default values for new objects
 // 
