@@ -1,5 +1,8 @@
 #include "pch.h"
 #include "WSC.h"
+#include "Game/GameUtils.h"
+
+using namespace GameUtils;
 
 namespace
 {
@@ -8,9 +11,6 @@ namespace
 
 	// Graph level of the engine statistics graphs (F10) set when spectating
 	constexpr int STAT_GRAPHS_LEVEL = 6;
-
-	// Team number of the players that aren't in a team (spectators)
-	constexpr int NO_TEAM = 255;
 }
 
 /*

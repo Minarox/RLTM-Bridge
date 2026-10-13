@@ -35,6 +35,7 @@ namespace
 		Cvars::SendEntities,
 		Cvars::EntitiesInterval,
 		Cvars::SendSpectator,
+		Cvars::SendStats,
 		Cvars::AutoSpectate,
 		Cvars::HideHud,
 		Cvars::HudNames,
@@ -55,7 +56,7 @@ void WSC::RegisterServerCommands()
 {
 	RegisterServerCommand("ping", nullptr, [](const json& payload) -> json { return nullptr; });
 
-	// Send the current state of every topic again (match, scoreboard, spectator, players, entities)
+	// Send every state again (match, scoreboard, stats, spectator, players, entities, result)
 	RegisterServerCommand("resync", nullptr, [this](const json& payload) -> json {
 		ResendState();
 		return nullptr;

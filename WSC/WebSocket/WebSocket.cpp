@@ -17,6 +17,9 @@ namespace
 			case Topic::Statistic: return "statistic";
 			case Topic::Entities: return "entities";
 			case Topic::Players: return "players";
+			case Topic::Stats: return "stats";
+			case Topic::Event: return "event";
+			case Topic::Result: return "result";
 			case Topic::Response: return "response";
 		}
 
@@ -162,8 +165,8 @@ void WSC::Send(Topic topic, const json& payload)
 {
 	const std::string topicName = GetTopicName(topic);
 
-	// Match, scoreboard, spectator, players and entities are states, the other topics are one-shot messages
-	if (topic == Topic::Match || topic == Topic::Scoreboard || topic == Topic::Spectator || topic == Topic::Players || topic == Topic::Entities)
+	// The states are cached (skip the duplicates, sent again on each connection), the other topics are one-shot messages
+	if (topic != Topic::Plugin && topic != Topic::Statistic && topic != Topic::Event && topic != Topic::Response)
 	{
 		std::lock_guard<std::mutex> lock(sentCacheMutex);
 
@@ -178,7 +181,7 @@ void WSC::Send(Topic topic, const json& payload)
 	CountSent(socket.send(message));
 
 	// The entities are sent several times per second, they would flood the console
-	if (debug && topic != Topic::Entities) LOG("[debug] Sent: {}", message.substr(0, MAX_DEBUG_LOG_SIZE));
+	if (debug && topic != Topic::Entities && topic != Topic::Stats) LOG("[debug] Sent: {}", message.substr(0, MAX_DEBUG_LOG_SIZE));
 }
 
 // Sends the current state of the game to the server, on (re)connection or when asked by the server

@@ -74,19 +74,31 @@ void WSC::HookEvents()
 		Hook(eventName, [this]() { UpdateMatch(); });
 
 	Hook("Function GameEvent_TA.Countdown.BeginState", [this]() {
+		match.inPlay = false;
 		ApplyReplayName();
 		UpdateMatch(true);
+		SendEvent("kickoff");
 	});
 	Hook("Function TAGame.GameEvent_Soccar_TA.EventMatchEnded", [this]() {
 		// Last chance before the replay is saved, the name is only for this match
-		ApplyReplayName();
+		if (ApplyReplayName()) match.replayName = GetReplayName();
 		SetReplayName("");
+
+		match.inPlay = false;
+		match.resultPending = true; // Sent on the next tick, after the last goal (Game/GameEvents.cpp)
 		UpdateMatch();
 	});
 	Hook("Function TAGame.GameEvent_Soccar_TA.OnBallHasBeenHit", [this]() {
-		// Only needed to detect the start of the match, ignore the other touches
+		// First touch after a kickoff: start of the match, and the ball is in play (advanced statistics)
+		match.inPlay = true;
 		if (!match.started) UpdateMatch();
 	});
+	Hook("Function GameEvent_Soccar_TA.PodiumSpotlight.BeginState", [this]() { SendEvent("podium"); });
+
+	// Goals (ball speed), the scorer and the assist come from the stat ticker
+	gameWrapper->HookEventWithCaller<BallWrapper>("Function TAGame.Ball_TA.OnHitGoal",
+		[this](BallWrapper ball, void* params, std::string eventName) { OnGoal(ball); });
+	hookedEvents.push_back({ "Function TAGame.Ball_TA.OnHitGoal", false });
 	Hook("Function TAGame.GameEvent_Soccar_TA.AddLocalPlayer", [this]() {
 		JoinSpectators();
 		UpdateMatch();

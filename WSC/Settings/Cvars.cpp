@@ -56,6 +56,8 @@ void WSC::RegisterCvars()
 	persistentStorage->RegisterPersistentCvar(Cvars::EntitiesInterval, "100", "Interval between two entities updates (milliseconds)", true, true, 16, true, 1000);
 	persistentStorage->RegisterPersistentCvar(Cvars::SendSpectator, "1", "Send the player followed by the spectator camera", true, true, 0, true, 1)
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) { if (!cvar.getBoolValue()) Send(Topic::Spectator, nullptr); });
+	persistentStorage->RegisterPersistentCvar(Cvars::SendStats, "1", "Send the advanced statistics (boost, supersonic, air time, etc.) every second", true, true, 0, true, 1)
+		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) { if (!cvar.getBoolValue()) Send(Topic::Stats, nullptr); });
 
 	// Spectator
 	auto onHudSettingChanged = [this](std::string oldValue, CVarWrapper cvar) {

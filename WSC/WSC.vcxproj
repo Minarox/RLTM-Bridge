@@ -132,6 +132,8 @@
     </ClCompile>
     <ClCompile Include="Game\GameData.cpp" />
     <ClCompile Include="Game\GameActions.cpp" />
+    <ClCompile Include="Game\GameEvents.cpp" />
+    <ClCompile Include="Game\AdvancedStats.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imgui\imconfig.h" />
@@ -151,6 +153,7 @@
     <ClInclude Include="GuiBase.h" />
     <ClInclude Include="PersistentStorage.h" />
     <ClInclude Include="Protocol\Protocol.h" />
+    <ClInclude Include="Game\GameUtils.h" />
     <ClInclude Include="WSC.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>

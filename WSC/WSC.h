@@ -57,6 +57,7 @@ namespace Cvars
 	inline constexpr const char* SendEntities = "wsc_send_entities";
 	inline constexpr const char* EntitiesInterval = "wsc_entities_interval";
 	inline constexpr const char* SendSpectator = "wsc_send_spectator";
+	inline constexpr const char* SendStats = "wsc_send_stats";
 
 	// Spectator
 	inline constexpr const char* AutoSpectate = "wsc_auto_spectate";
@@ -74,7 +75,7 @@ namespace Cvars
 	inline constexpr const char* All[] = {
 		Url, ClientName, Token, AutoConnect, AutoReconnect, HandshakeTimeout, MinWaitBetweenRetries, MaxWaitBetweenRetries, PerMessageDeflate, PingInterval, Debug,
 		ServerControl, ServerAllowCamera, ServerAllowActions, ServerAllowReplayName, ServerAllowSettings,
-		SendEntities, EntitiesInterval, SendSpectator,
+		SendEntities, EntitiesInterval, SendSpectator, SendStats,
 		AutoSpectate, HideHud, HudNames, HudMatchInfo, HideStatGraphs,
 		AutoReady, AutoSaveReplays, ReplayNameFormat
 	};
@@ -90,6 +91,9 @@ enum class Topic
 	Statistic,
 	Entities,
 	Players,
+	Stats,
+	Event,
+	Result,
 	Response
 };
 
@@ -199,16 +203,60 @@ private:
 	void SendCommandResponse(const std::string& command, const json& id, const std::string& error = "", const json& result = nullptr);
 
 	// Game data (Game/GameData.cpp)
+	using SteadyTime = std::chrono::steady_clock::time_point;
+
+	// Advanced statistics of a player, accumulated on each frame while the ball is in play (Game/AdvancedStats.cpp)
+	struct PlayerStats
+	{
+		json identity;
+		double timeInPlay = 0; // Seconds with a car on the field while the ball is in play
+		double timeSupersonic = 0;
+		double timeOnGround = 0;
+		double timeOnWall = 0;
+		double timeInAir = 0;
+		double distance = 0; // Unreal units
+		double boostUsed = 0; // 0 to 100 per full tank
+		double lastBoost = -1; // -1 when the car isn't on the field
+	};
+
+	// Stat ticker message received for a goal (scorer, assist, own goal)
+	struct GoalTicker
+	{
+		json player; // null when not received
+		SteadyTime time;
+	};
+
+	// Goal waiting for the stat ticker messages (scorer, assist) before being sent (Game/GameEvents.cpp)
+	struct PendingGoal
+	{
+		bool active = false;
+		SteadyTime time;
+		int ballSpeed = 0;
+		float ballY = 0;
+	};
+
 	struct MatchState
 	{
 		bool started = false;
 		bool paused = false;
 		bool ended = false;
 		bool replay = false;
+		bool overtime = false;
+		bool inPlay = false; // Between the first touch after a kickoff and the next goal
+		bool resultPending = false; // The match is ended, the result is sent after its last goal
+		bool resultSent = false;
 		json clock = 0;
+		std::string replayName; // Name given to the replay of this match
 		std::string lastStatTick;
-		std::chrono::steady_clock::time_point lastStatTickTime;
+		SteadyTime lastStatTickTime;
 		std::map<std::string, std::map<std::string, int>> statEvents; // "<uid>|<name>" -> stat event name -> count
+		std::map<std::string, PlayerStats> playerStats; // "<uid>|<name>" -> advanced statistics
+		SteadyTime lastStatsUpdate;
+		SteadyTime lastStatsSent;
+		PendingGoal pendingGoal;
+		GoalTicker goalTicker;
+		GoalTicker assistTicker;
+		GoalTicker ownGoalTicker;
 	};
 	MatchState match;
 	std::chrono::steady_clock::time_point lastEntitiesUpdate;
@@ -224,7 +272,19 @@ private:
 	void SendEntities(ServerWrapper server);
 	void SendPlayers(ServerWrapper server);
 	void SendSpectatorTarget();
+	json GetTeams(ServerWrapper server);
 	void ResetMatch();
+
+	// Advanced statistics (Game/AdvancedStats.cpp)
+	void UpdateAdvancedStats(ServerWrapper server);
+	json GetAdvancedStats(ServerWrapper server);
+
+	// Game events and result (Game/GameEvents.cpp)
+	void SendEvent(const std::string& type, json data = json::object());
+	void OnGoal(BallWrapper ball);
+	void OnGoalTicker(const std::string& eventName, const json& player);
+	void SendPendingGoal(bool force = false);
+	void SendResult();
 
 	// Game actions (Game/GameActions.cpp)
 	std::string initialAutoSaveReplay; // value of "ranked_autosavereplay_all" before the plugin changed it

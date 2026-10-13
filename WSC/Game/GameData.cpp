@@ -1,5 +1,8 @@
 #include "pch.h"
 #include "WSC.h"
+#include "Game/GameUtils.h"
+
+using namespace GameUtils;
 
 namespace
 {
@@ -20,38 +23,8 @@ namespace
 	// Playlist ID of the private matches
 	constexpr int PRIVATE_MATCH_PLAYLIST = 6;
 
-	// Team number of the players that aren't in a team (spectators)
-	constexpr int NO_TEAM = 255;
-
-	// Unreal units per second to km/h, rounded
-	int ToKmh(const Vector& velocity)
-	{
-		return static_cast<int>(velocity.magnitude() * 0.036f + 0.5f);
-	}
-
-	json ToJson(const Vector& location)
-	{
-		return { static_cast<int>(location.X), static_cast<int>(location.Y), static_cast<int>(location.Z) };
-	}
-
-	// Fills the fields identifying a player in every topic, returns false if the player isn't fully loaded
-	bool GetPlayerIdentity(PriWrapper player, json& data)
-	{
-		UnrealStringWrapper name = player.GetPlayerName();
-		if (!name) return false;
-
-		data["uid"] = player.GetUniqueIdWrapper().GetIdString();
-		data["name"] = name.ToString();
-		data["bot"] = static_cast<bool>(player.GetbBot());
-
-		return true;
-	}
-
-	// Unique key of a player: "<uid>|<name>" (bots share the same uid)
-	std::string GetPlayerKey(const json& identity)
-	{
-		return identity["uid"].get<std::string>() + '|' + identity["name"].get<std::string>();
-	}
+	// Interval between two updates of the advanced statistics
+	constexpr auto STATS_INTERVAL = std::chrono::seconds(1);
 }
 
 /*
@@ -92,15 +65,21 @@ void WSC::UpdateMatch(bool countdownStarted)
 	// The clock is frozen when the match ends in overtime
 	if (!(match.ended && server.GetbOverTime())) match.clock = server.GetSecondsRemaining();
 
+	const bool overtime = server.GetbOverTime();
+	if (overtime && !match.overtime) SendEvent("overtime");
+	match.overtime = overtime;
+
 	json payload = json::object();
+	payload["guid"] = GetMatchGuid(server);
 	payload["arenaCode"] = gameWrapper->GetCurrentMap();
 	payload["score"] = GetScore(server);
+	payload["teams"] = GetTeams(server);
 	payload["clock"] = match.clock;
 	payload["duration"] = server.GetGameTime();
 	payload["isUnlimited"] = static_cast<bool>(server.GetbUnlimitedTime());
 	payload["isStarted"] = match.started;
 	payload["isPaused"] = match.paused;
-	payload["isOvertime"] = static_cast<bool>(server.GetbOverTime());
+	payload["isOvertime"] = overtime;
 	payload["isEnded"] = match.ended;
 	payload["isReplay"] = match.replay;
 
@@ -115,6 +94,7 @@ void WSC::SetReplayState(bool replay)
 	if (match.replay == replay) return;
 
 	match.replay = replay;
+	SendEvent(replay ? "replayStart" : "replayEnd");
 	UpdateMatch();
 }
 
@@ -195,6 +175,9 @@ void WSC::OnStatTicker(void* params)
 
 	if (match.started) match.statEvents[key][eventName]++;
 
+	// Scorer, assist and own goal of the goal event
+	OnGoalTicker(eventName, GetPlayerReference(player));
+
 	payload["eventName"] = eventName;
 	Send(Topic::Statistic, payload);
 
@@ -209,16 +192,29 @@ void WSC::OnTick()
 	// Every frame, even during the replays and the pauses: only sent when the camera target changes
 	if (IsCvarEnabled(Cvars::SendSpectator)) SendSpectatorTarget();
 
-	if (!IsMatchLive()) return;
+	// Sent once the stat ticker messages of the goal (scorer, assist) are received, then the result after the last goal
+	SendPendingGoal();
+	if (match.resultPending && !match.pendingGoal.active) SendResult();
 
-	CVarWrapper intervalCvar = GetCvar(Cvars::EntitiesInterval);
-	const auto interval = std::chrono::milliseconds(intervalCvar ? intervalCvar.getIntValue() : 100);
-	const auto now = std::chrono::steady_clock::now();
-	if (now - lastEntitiesUpdate < interval) return;
-	lastEntitiesUpdate = now;
+	if (!IsMatchLive()) return;
 
 	ServerWrapper server = GetServerWrapper();
 	if (!server) return;
+
+	// Accumulated on each frame for the precision of the times, sent once per second
+	UpdateAdvancedStats(server);
+
+	const auto now = std::chrono::steady_clock::now();
+	if (now - match.lastStatsSent >= STATS_INTERVAL && IsCvarEnabled(Cvars::SendStats))
+	{
+		match.lastStatsSent = now;
+		Send(Topic::Stats, GetAdvancedStats(server));
+	}
+
+	CVarWrapper intervalCvar = GetCvar(Cvars::EntitiesInterval);
+	const auto interval = std::chrono::milliseconds(intervalCvar ? intervalCvar.getIntValue() : 100);
+	if (now - lastEntitiesUpdate < interval) return;
+	lastEntitiesUpdate = now;
 
 	SendPlayers(server);
 
@@ -343,10 +339,38 @@ void WSC::SendSpectatorTarget()
 	Send(Topic::Spectator, payload);
 }
 
+// Custom name (null if not set in the match settings) and colors of the teams
+json WSC::GetTeams(ServerWrapper server)
+{
+	json teams = json::array();
+
+	for (TeamWrapper team : server.GetTeams())
+	{
+		if (!team) continue;
+
+		UnrealStringWrapper customName = team.GetCustomTeamName();
+		const std::string name = customName ? customName.ToString() : "";
+
+		const LinearColor primary = team.GetPrimaryColor();
+		const LinearColor secondary = team.GetSecondaryColor();
+
+		json teamData = json::object();
+		teamData["index"] = team.GetTeamNum();
+		teamData["name"] = name.empty() ? json() : json(name);
+		teamData["primaryColor"] = Protocol::ToHexColor(primary.R, primary.G, primary.B);
+		teamData["secondaryColor"] = Protocol::ToHexColor(secondary.R, secondary.G, secondary.B);
+
+		teams += teamData;
+	}
+
+	return teams;
+}
+
 void WSC::ResetMatch()
 {
 	match = MatchState();
 
-	for (Topic topic : { Topic::Match, Topic::Scoreboard, Topic::Spectator, Topic::Entities, Topic::Players })
+	// The result of the last match is kept: the server may not have received it yet
+	for (Topic topic : { Topic::Match, Topic::Scoreboard, Topic::Stats, Topic::Spectator, Topic::Entities, Topic::Players })
 		Send(topic, nullptr);
 }

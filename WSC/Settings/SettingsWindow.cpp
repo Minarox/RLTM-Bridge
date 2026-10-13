@@ -106,7 +106,7 @@ void WSC::RenderStatus()
 	ImGui::Text("Messages sent: %llu (%.1f KB)", static_cast<unsigned long long>(messagesSent), bytesSent / 1024.0);
 	ImGui::SameLine();
 	if (ImGui::Button("Resend the state")) gameWrapper->Execute([this](GameWrapper*) { ResendState(); });
-	RenderTooltip("Send the current match, scoreboard, spectator, players and entities data to the server again");
+	RenderTooltip("Send every state (match, scoreboard, statistics, spectator, players, entities, result) to the server again");
 
 	std::string command;
 	{
@@ -133,7 +133,7 @@ void WSC::RenderStatus()
 
 void WSC::RenderDataSettings()
 {
-	RenderHelp("The match, scoreboard, players and statistic events are always sent. Disabling a data clears it on the server.");
+	RenderHelp("The match, scoreboard, players, events and result are always sent. Disabling a data clears it on the server.");
 
 	if (RenderCvarCheckbox("Send the balls and cars data", Cvars::SendEntities, "Speed, location, boost, etc. while the match is playing (minimap, boost gauges)"))
 	{
@@ -142,6 +142,7 @@ void WSC::RenderDataSettings()
 		ImGui::Unindent();
 	}
 
+	RenderCvarCheckbox("Send the advanced statistics", Cvars::SendStats, "Boost used and collected, time supersonic, on the ground, on the wall and in the air, average speed (every second, always in the result)");
 	RenderCvarCheckbox("Send the player followed by the camera", Cvars::SendSpectator, "Player watched by the spectator camera, nothing with the free camera (dynamic player overlay)");
 }
 

@@ -68,6 +68,7 @@ The settings window is organized by feature: connection to the server, status (m
 | `wsc_send_entities` | `1` | Send the balls and cars data (`entities`) |
 | `wsc_entities_interval` | `100` | Interval between two entities updates (16 to 1000 milliseconds) |
 | `wsc_send_spectator` | `1` | Send the player followed by the spectator camera (`spectator`) |
+| `wsc_send_stats` | `1` | Send the advanced statistics every second (`stats`, always in the `result`) |
 | **Spectator** | | |
 | `wsc_auto_spectate` | `1` | Join the spectators when joining a match |
 | `wsc_hide_hud` | `1` | Hide the HUD when spectating |
@@ -96,15 +97,18 @@ The settings window is organized by feature: connection to the server, status (m
 Every message sent to the server is a JSON object `{ "topic": "<topic>", "payload": <data> }`:
 
 - `plugin` - Sent first on each connection: plugin `version`, `protocol` version of the messages format (currently `2`) and `client` name
-- `match` - State of the match (arena, score, clock and flags)
+- `match` - State of the match (unique `guid`, arena, score, clock, flags, and the custom `teams` names and colors)
 - `scoreboard` - Statistics of each player (score, goals, saves, etc. and the `events` counters received for the player, a missing event means 0)
 - `spectator` - Player followed by the spectator camera (`target`, `null` with the free camera) and camera state (`camera`)
 - `players` - Players of the match (uid, name, team, car)
 - `entities` - Balls and cars data (speed, location, boost, etc.), sent every `wsc_entities_interval` ms while the match is playing. Its `time` field is a monotonic time in milliseconds: use the difference between two updates to interpolate the positions
+- `stats` - Advanced statistics of each player, every second while the match is playing: boost used and collected, time supersonic, on the ground, on the wall and in the air, average speed
 - `statistic` - Statistic event of a player (goal, save, demolition, etc.)
+- `event` - Events of the match: `kickoff`, `goal` (team, scorer, assister, own goal, ball speed), `overtime`, `replayStart`, `replayEnd`, `matchEnded`, `podium`
+- `result` - Result of the last match, sent once at the end of the match (winner, MVP, score, teams, scoreboard, advanced statistics, replay name): kept and sent again on each connection until the next match ends, deduplicate it with its `guid`
 - `response` - Result of a command sent by the server (see below)
 
-The `match`, `scoreboard`, `spectator`, `players` and `entities` topics are only sent when their payload changes, and are sent again on each (re)connection. A `null` payload means that there is no match anymore.
+The `match`, `scoreboard`, `stats`, `spectator`, `players`, `entities` and `result` topics are only sent when their payload changes, and are sent again on each (re)connection. A `null` payload means that there is no match anymore.
 
 ## 🎮 Commands
 
@@ -114,7 +118,7 @@ Each command is answered on the `response` topic with `{ "command": "<name>", "i
 | Command | Payload | Description |
 | --- | --- | --- |
 | `ping` | | Check that the plugin answers |
-| `resync` | | Send the current `match`, `scoreboard`, `spectator`, `players` and `entities` states again |
+| `resync` | | Send every state again (`match`, `scoreboard`, `stats`, `spectator`, `players`, `entities`, `result`) |
 | `spectate` | | Join the spectators |
 | `ready` | | Mark as ready |
 | `hide_hud` | | Hide the spectator HUD |
