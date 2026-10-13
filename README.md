@@ -53,7 +53,7 @@ The settings window is organized by feature: connection to the server, status (m
 | Cvar | Default | Description |
 | --- | --- | --- |
 | **Connection** | | |
-| `wsc_url` | `ws://localhost:3000` | URL of the WebSocket server |
+| `wsc_url` | `ws://localhost:3000` | URL of the WebSocket server, `ws://` or `wss://` (TLS, with the root certificates of Windows) |
 | `wsc_auto_connect` | `0` | Connect to the server when the plugin is loaded |
 | `wsc_auto_reconnect` | `1` | Reconnect automatically to the server |
 | `wsc_handshake_timeout` | `3` | Handshake timeout (seconds) |
