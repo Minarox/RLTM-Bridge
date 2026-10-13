@@ -69,12 +69,20 @@ void WSC::HookEvents()
 		"Function TAGame.Team_TA.OnScoreUpdated",
 		"Function TAGame.GameEvent_Soccar_TA.OnGameTimeUpdated",
 		"Function TAGame.GameEvent_Soccar_TA.OnOvertimeUpdated",
-		"Function Engine.WorldInfo.EventPauseChanged",
-		"Function TAGame.GameEvent_Soccar_TA.EventMatchEnded"
+		"Function Engine.WorldInfo.EventPauseChanged"
 	})
 		Hook(eventName, [this]() { UpdateMatch(); });
 
-	Hook("Function GameEvent_TA.Countdown.BeginState", [this]() { UpdateMatch(true); });
+	Hook("Function GameEvent_TA.Countdown.BeginState", [this]() {
+		ApplyReplayName();
+		UpdateMatch(true);
+	});
+	Hook("Function TAGame.GameEvent_Soccar_TA.EventMatchEnded", [this]() {
+		// Last chance before the replay is saved, the name is only for this match
+		ApplyReplayName();
+		replayName.clear();
+		UpdateMatch();
+	});
 	Hook("Function TAGame.GameEvent_Soccar_TA.OnBallHasBeenHit", [this]() {
 		// Only needed to detect the start of the match, ignore the other touches
 		if (!match.started) UpdateMatch();

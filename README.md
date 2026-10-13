@@ -39,7 +39,7 @@
 - [x] Mark as ready when match end
 - [x] Save match replay when match end
 - [x] Join spectator team on new game
-- [ ] Customize replay name
+- [x] Customize replay name
 - [x] Plugin settings
 - [x] Control the game from the server
 - [ ] Documentation
@@ -65,6 +65,7 @@ Every setting is available in the plugin settings window (`F2` > `Plugins` > `We
 | `wsc_hide_stat_graphs` | `1` | Hide the engine statistics graphs (F10) when spectating |
 | `wsc_auto_ready` | `1` | Mark as ready at the end of the match |
 | `wsc_auto_save_replays` | `1` | Save the replay at the end of the match |
+| `wsc_replay_name_format` | `{blue} vs {orange} - Match {game}` | Name of the replays when the server sends the teams (see `set_replay_name`) |
 
 | Command | Description |
 | --- | --- |
@@ -90,7 +91,7 @@ The `match`, `scoreboard`, `spectator`, `players` and `entities` topics are only
 ## 🎮 Commands
 
 The server can control the game by sending `{ "command": "<name>", "payload": { ... }, "id": "<optional>" }`.
-Each command is answered on the `response` topic with `{ "command": "<name>", "id": "<id>", "success": true }`, or `"success": false` and an `"error"` message.
+Each command is answered on the `response` topic with `{ "command": "<name>", "id": "<id>", "success": true }` (and a `"result"` for some commands), or `"success": false` and an `"error"` message.
 
 | Command | Payload | Description |
 | --- | --- | --- |
@@ -100,7 +101,9 @@ Each command is answered on the `response` topic with `{ "command": "<name>", "i
 | `ready` | | Mark as ready |
 | `hide_hud` | | Hide the spectator HUD |
 | `focus_player` | `{ "uid": "<uid>", "name": "<name>" }` | Focus the spectator camera on a player (`uid` and / or `name`) |
-| `set_setting` | `{ "name": "<cvar>", "value": <value> }` | Change a game setting: `wsc_entities_interval`, `wsc_auto_save_replays`, `wsc_auto_spectate`, `wsc_auto_ready`, `wsc_hide_hud` or `wsc_hide_stat_graphs` |
+| `set_setting` | `{ "name": "<cvar>", "value": <value> }` | Change a game setting: `wsc_entities_interval`, `wsc_auto_save_replays`, `wsc_replay_name_format`, `wsc_auto_spectate`, `wsc_auto_ready`, `wsc_hide_hud` or `wsc_hide_stat_graphs` |
+| `set_replay_name` | `{ "blue": "<team>", "orange": "<team>", "game": <number> }` or `{ "name": "<name>" }` | Name the replay of the current match (or of the next one if the current match is ended), with `wsc_replay_name_format` or the given name. Result: `{ "name": "<name>", "applied": <bool> }` |
+| `clear_replay_name` | | Keep the default name for the replay |
 
 Only these commands can be executed: an invalid message or command is answered with an error and never reaches the game.
 

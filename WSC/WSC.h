@@ -46,6 +46,7 @@ namespace Cvars
 	// Game
 	inline constexpr const char* EntitiesInterval = "wsc_entities_interval";
 	inline constexpr const char* AutoSaveReplays = "wsc_auto_save_replays";
+	inline constexpr const char* ReplayNameFormat = "wsc_replay_name_format";
 	inline constexpr const char* AutoSpectate = "wsc_auto_spectate";
 	inline constexpr const char* AutoReady = "wsc_auto_ready";
 	inline constexpr const char* HideHud = "wsc_hide_hud";
@@ -96,13 +97,19 @@ private:
 	void SetCvarFromUI(const char* name, const std::string& value);
 
 	// Settings window (Settings/SettingsWindow.cpp)
-	std::array<char, 512> urlInput{};
-	bool urlInputActive = false;
+	struct TextInput
+	{
+		std::array<char, 512> buffer{};
+		bool active = false;
+	};
+	TextInput urlInput;
+	TextInput replayNameFormatInput;
 	void RenderConnection();
 	void RenderWebSocketSettings();
 	void RenderGameSettings();
 	void RenderCvarCheckbox(const char* label, const char* cvarName, const char* tooltip);
 	void RenderCvarInputInt(const char* label, const char* cvarName, const char* tooltip);
+	void RenderCvarInputText(const char* label, const char* cvarName, TextInput& input, const char* tooltip);
 
 	// WebSocket (WebSocket/WebSocket.cpp)
 	ix::WebSocket socket;
@@ -127,7 +134,7 @@ private:
 		json payload;
 		json id; // Optional, sent back in the response
 	};
-	using CommandHandler = std::function<void(const json& payload)>;
+	using CommandHandler = std::function<json(const json& payload)>; // Returns the result sent in the response (null for none)
 	std::map<std::string, CommandHandler> commandHandlers;
 	std::mutex pendingCommandsMutex;
 	std::deque<ServerCommand> pendingCommands;
@@ -135,7 +142,7 @@ private:
 	void OnServerMessage(const std::string& message);
 	void ProcessServerCommands();
 	void ExecuteServerCommand(const ServerCommand& command);
-	void SendCommandResponse(const std::string& command, const json& id, const std::string& error = "");
+	void SendCommandResponse(const std::string& command, const json& id, const std::string& error = "", const json& result = nullptr);
 
 	// Game data (Game/GameData.cpp)
 	struct MatchState
@@ -167,8 +174,10 @@ private:
 
 	// Game actions (Game/GameActions.cpp)
 	std::string initialAutoSaveReplay; // value of "ranked_autosavereplay_all" before the plugin changed it
+	std::string replayName; // Name of the replay of the current or next match, set by the server
 	void ApplyAutoSaveReplays();
 	void RestoreAutoSaveReplays();
+	bool ApplyReplayName();
 	bool HideSpectatorHud(int delay, bool force = false);
 	bool HideStatGraphs();
 	bool ReadyUp(bool force = false);

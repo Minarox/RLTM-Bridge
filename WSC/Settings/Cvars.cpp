@@ -37,6 +37,7 @@ void WSC::RegisterCvars()
 	persistentStorage->RegisterPersistentCvar(Cvars::EntitiesInterval, "100", "Interval between two entities updates (milliseconds)", true, true, 16);
 	persistentStorage->RegisterPersistentCvar(Cvars::AutoSaveReplays, "1", "Save the replay at the end of the match", true, true, 0, true, 1)
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) { ApplyAutoSaveReplays(); });
+	persistentStorage->RegisterPersistentCvar(Cvars::ReplayNameFormat, "{blue} vs {orange} - Match {game}", "Name of the replays sent by the server, with {blue}, {orange} and {game}");
 	persistentStorage->RegisterPersistentCvar(Cvars::AutoSpectate, "1", "Join the spectators when joining a match", true, true, 0, true, 1);
 	persistentStorage->RegisterPersistentCvar(Cvars::AutoReady, "1", "Mark as ready at the end of the match", true, true, 0, true, 1);
 	persistentStorage->RegisterPersistentCvar(Cvars::HideHud, "1", "Hide the HUD when spectating", true, true, 0, true, 1);

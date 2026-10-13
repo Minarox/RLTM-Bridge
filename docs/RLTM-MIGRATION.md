@@ -22,6 +22,7 @@ Le format des messages du plugin a changé. Ta mission : adapter RLTM à ce nouv
 | 5 | Nouveau topic **`plugin`**, envoyé en premier à chaque connexion : `{ version, protocol }` | Nouveau : vérifier `protocol === 2` |
 | 6 | Le plugin accepte des **commandes** du serveur et répond sur le topic **`response`** | Nouveau : optionnel |
 | 7 | Nouveau topic **`spectator`** : le joueur suivi par la caméra spectateur, `null` en caméra libre | Nouveau : overlay dynamique du joueur regardé |
+| 8 | Nouvelle commande **`set_replay_name`** : nommer le replay du match avec les équipes et le numéro de la partie | Nouveau : à envoyer pour chaque partie d'une série |
 
 Un plugin v1 n'envoie jamais de message `plugin`. Si des messages arrivent sans `plugin` préalable, c'est un ancien plugin : affiche un avertissement clair (« plugin WSC trop ancien, mettez-le à jour »). Ne cherche pas à gérer les deux formats.
 
@@ -136,7 +137,7 @@ Réponse à une commande envoyée par le serveur (voir ci-dessous).
 ```json
 { "topic": "response", "payload": { "command": "focus_player", "id": "42", "success": false, "error": "Player not found or camera not available" } }
 ```
-`error` n'est présent que si `success` vaut `false`. `command` et `id` sont vides ou `null` quand le message reçu était invalide.
+`error` n'est présent que si `success` vaut `false`. Certaines commandes renvoient aussi un champ `result` (voir `set_replay_name`). `command` et `id` sont vides ou `null` quand le message reçu était invalide.
 
 ## Commandes (serveur → plugin), optionnel
 
@@ -150,7 +151,23 @@ Format : `{ "command": "<nom>", "payload": { ... }, "id": "<optionnel, chaîne o
 | `ready` | | Se marquer prêt |
 | `hide_hud` | | Masquer le HUD spectateur |
 | `focus_player` | `{ "uid": "...", "name": "..." }` (au moins un des deux) | Centrer la caméra spectateur sur un joueur |
-| `set_setting` | `{ "name": "<cvar>", "value": <valeur> }` | Seuls `wsc_entities_interval`, `wsc_auto_save_replays`, `wsc_auto_spectate`, `wsc_auto_ready`, `wsc_hide_hud` et `wsc_hide_stat_graphs` sont acceptés |
+| `set_setting` | `{ "name": "<cvar>", "value": <valeur> }` | Seuls `wsc_entities_interval`, `wsc_auto_save_replays`, `wsc_replay_name_format`, `wsc_auto_spectate`, `wsc_auto_ready`, `wsc_hide_hud` et `wsc_hide_stat_graphs` sont acceptés |
+| `set_replay_name` | `{ "blue": "<équipe>", "orange": "<équipe>", "game": <numéro> }` ou `{ "name": "<nom complet>" }` | Nommer le replay du match (voir ci-dessous) |
+| `clear_replay_name` | | Revenir au nom par défaut du jeu |
+
+### Nommer les replays (`set_replay_name`)
+
+Le jeu ne connaît pas les équipes de RLTM. Pour que chaque replay sauvegardé porte un nom du style « Équipe 1 vs Équipe 2 - Match 3 », RLTM doit envoyer **pour chaque partie** d'une série :
+```json
+{ "command": "set_replay_name", "payload": { "blue": "Équipe 1", "orange": "Équipe 2", "game": 3 }, "id": "replay-3" }
+```
+- `blue` est l'équipe 0 (bleue) du jeu, `orange` l'équipe 1. RLTM doit donc savoir quelle équipe joue de quel côté : utilise le `teamIndex` des joueurs (`players` / `scoreboard`) pour faire la correspondance avec ses équipes.
+- `game` est le numéro de la partie dans la série : un entier de 1 à 99.
+- Le plugin construit le nom avec sa cvar `wsc_replay_name_format` (par défaut `{blue} vs {orange} - Match {game}`), réglable dans le jeu. Pour imposer un nom complet, envoie `{ "name": "..." }` à la place.
+- Le nom est nettoyé (caractères de contrôle retirés) et limité à 128 octets.
+- **Quand l'envoyer** : dès que les équipes de la partie sont connues, au plus tard pendant la partie. Le nom ne vaut que pour **un seul match** et il est oublié à la fin du match. Envoyé après la fin d'une partie, il s'applique à la partie suivante.
+- Réponse : `"result": { "name": "Équipe 1 vs Équipe 2 - Match 3", "applied": true }`. `applied: false` signifie qu'il n'y a pas de match en cours ou que le match est terminé : le nom sera appliqué au début du match suivant.
+- La sauvegarde automatique des replays (`wsc_auto_save_replays`) doit être activée côté plugin pour que le replay soit enregistré.
 
 Limites côté plugin : messages de 16 Ko maximum, 32 niveaux d'imbrication maximum, 64 commandes en attente maximum, et toute commande inconnue est refusée. Le joueur peut désactiver toutes les commandes (`wsc_server_control`). Gère donc toujours `success: false`.
 
@@ -163,8 +180,9 @@ Une idée de fonctionnalité si RLTM a une interface de régie : boutons « cam�
 3. Adapter les overlays et calculs de stats (tournois) qui lisaient `match.statistics` ou les compteurs à plat. Un compteur absent vaut 0.
 4. Créer (ou adapter) un overlay « joueur regardé » piloté par le topic `spectator` : afficher les stats du `target` (depuis `scoreboard`), et le cacher quand `target` vaut `null`.
 5. Utiliser `entities.time` pour l'interpolation là où des positions sont affichées (minimap, etc.).
-6. Activer `perMessageDeflate` sur le serveur WebSocket si ce n'est pas le cas.
-7. Optionnel : envoyer des commandes et gérer les réponses.
-8. Mettre à jour les types, les tests et la documentation de RLTM. Si RLTM a des tests, ajoute des fixtures construites à partir des exemples ci-dessus.
+6. Envoyer `set_replay_name` pour chaque partie d'une série, avec les noms d'équipes RLTM placés du bon côté (bleu/orange) et le numéro de la partie. Afficher une erreur dans RLTM si la réponse est `success: false`.
+7. Activer `perMessageDeflate` sur le serveur WebSocket si ce n'est pas le cas.
+8. Optionnel : envoyer des commandes et gérer les réponses.
+9. Mettre à jour les types, les tests et la documentation de RLTM. Si RLTM a des tests, ajoute des fixtures construites à partir des exemples ci-dessus.
 
 À la fin, résume les fichiers modifiés, ce qui a été testé, et tout point du protocole qui t'a semblé ambigu ou manquant : il pourra être corrigé côté plugin.

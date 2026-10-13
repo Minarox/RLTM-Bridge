@@ -38,22 +38,7 @@ void WSC::RenderSettings()
 
 void WSC::RenderConnection()
 {
-	// Server URL, applied when the input loses focus
-	CVarWrapper url = GetCvar(Cvars::Url);
-	if (!url) return;
-
-	if (!urlInputActive)
-	{
-		const std::string value = url.getStringValue();
-		const size_t length = std::min(value.size(), urlInput.size() - 1);
-		std::copy_n(value.begin(), length, urlInput.begin());
-		urlInput[length] = '\0';
-	}
-
-	ImGui::InputText("Server URL", urlInput.data(), urlInput.size());
-	urlInputActive = ImGui::IsItemActive();
-	if (ImGui::IsItemDeactivatedAfterEdit()) SetCvarFromUI(Cvars::Url, urlInput.data());
-	RenderTooltip("WebSocket server URL, e.g. ws://localhost:3000");
+	RenderCvarInputText("Server URL", Cvars::Url, urlInput, "WebSocket server URL, e.g. ws://localhost:3000");
 
 	RenderCvarCheckbox("Connect when the plugin is loaded", Cvars::AutoConnect, nullptr);
 
@@ -119,6 +104,8 @@ void WSC::RenderGameSettings()
 	RenderCvarCheckbox("Hide the statistics graphs", Cvars::HideStatGraphs, "Hide the engine statistics graphs (F10)");
 	RenderCvarCheckbox("Mark as ready", Cvars::AutoReady, "Mark as ready at the end of the match");
 	RenderCvarCheckbox("Save replays", Cvars::AutoSaveReplays, "Save the replay at the end of the match");
+	RenderCvarInputText("Replay name", Cvars::ReplayNameFormat, replayNameFormatInput,
+		"Name of the replay when the server sends the teams: {blue}, {orange} and {game} are replaced by the blue team, the orange team and the game number");
 }
 
 void WSC::RenderCvarCheckbox(const char* label, const char* cvarName, const char* tooltip)
@@ -139,5 +126,25 @@ void WSC::RenderCvarInputInt(const char* label, const char* cvarName, const char
 	int value = cvar.getIntValue();
 	ImGui::SetNextItemWidth(150.0f);
 	if (ImGui::InputInt(label, &value, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue)) SetCvarFromUI(cvarName, std::to_string(value));
+	RenderTooltip(tooltip);
+}
+
+// Text input of a cvar, applied when the input loses focus
+void WSC::RenderCvarInputText(const char* label, const char* cvarName, TextInput& input, const char* tooltip)
+{
+	CVarWrapper cvar = GetCvar(cvarName);
+	if (!cvar) return;
+
+	if (!input.active)
+	{
+		const std::string value = cvar.getStringValue();
+		const size_t length = std::min(value.size(), input.buffer.size() - 1);
+		std::copy_n(value.begin(), length, input.buffer.begin());
+		input.buffer[length] = '\0';
+	}
+
+	ImGui::InputText(label, input.buffer.data(), input.buffer.size());
+	input.active = ImGui::IsItemActive();
+	if (ImGui::IsItemDeactivatedAfterEdit()) SetCvarFromUI(cvarName, input.buffer.data());
 	RenderTooltip(tooltip);
 }

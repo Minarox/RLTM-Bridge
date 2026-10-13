@@ -37,6 +37,25 @@ void WSC::RestoreAutoSaveReplays()
 }
 
 
+// Gives its name to the replay recorded during the match, before it is saved at the end of the match
+bool WSC::ApplyReplayName()
+{
+	if (replayName.empty()) return false;
+
+	ServerWrapper server = GetServerWrapper();
+	if (!server) return false;
+
+	ReplayDirectorWrapper replayDirector = server.GetReplayDirector();
+	if (!replayDirector) return false;
+
+	ReplaySoccarWrapper replay = replayDirector.GetReplay();
+	if (!replay) return false;
+
+	replay.SetReplayName(replayName);
+	return true;
+}
+
+
 /*
 	--- Game HUD ---
 */
