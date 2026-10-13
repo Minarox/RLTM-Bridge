@@ -127,6 +127,9 @@
     <ClCompile Include="Settings\SettingsWindow.cpp" />
     <ClCompile Include="WebSocket\WebSocket.cpp" />
     <ClCompile Include="WebSocket\ServerCommands.cpp" />
+    <ClCompile Include="Protocol\Protocol.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Game\GameData.cpp" />
     <ClCompile Include="Game\GameActions.cpp" />
   </ItemGroup>
@@ -147,6 +150,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="GuiBase.h" />
     <ClInclude Include="PersistentStorage.h" />
+    <ClInclude Include="Protocol\Protocol.h" />
     <ClInclude Include="WSC.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>

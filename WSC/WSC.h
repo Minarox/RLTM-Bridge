@@ -19,6 +19,7 @@
 #include "bakkesmod/wrappers/GameObject/Stats/StatEventWrapper.h"
 
 #include "GuiBase.h"
+#include "Protocol/Protocol.h"
 #include "PersistentStorage.h"
 #include "version.h"
 
@@ -167,12 +168,7 @@ private:
 	void SetSocketStatus(const std::string& error = "");
 
 	// Server commands (WebSocket/ServerCommands.cpp)
-	struct ServerCommand
-	{
-		std::string name;
-		json payload;
-		json id; // Optional, sent back in the response
-	};
+	using ServerCommand = Protocol::Command;
 	using CommandHandler = std::function<json(const json& payload)>; // Returns the result sent in the response (null for none)
 	struct RegisteredCommand
 	{

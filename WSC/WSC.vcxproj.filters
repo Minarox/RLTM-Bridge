@@ -19,6 +19,9 @@
     <Filter Include="Source Files\WebSocket">
       <UniqueIdentifier>{8b1f6a52-3c1e-4d0a-9f3e-2a7c5d9e1b02}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Protocol">
+      <UniqueIdentifier>{8b1f6a52-3c1e-4d0a-9f3e-2a7c5d9e1b04}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files\Game">
       <UniqueIdentifier>{8b1f6a52-3c1e-4d0a-9f3e-2a7c5d9e1b03}</UniqueIdentifier>
     </Filter>
@@ -50,6 +53,9 @@
     </ClCompile>
     <ClCompile Include="WebSocket\ServerCommands.cpp">
       <Filter>Source Files\WebSocket</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Protocol.cpp">
+      <Filter>Source Files\Protocol</Filter>
     </ClCompile>
     <ClCompile Include="Game\GameData.cpp">
       <Filter>Source Files\Game</Filter>
@@ -115,6 +121,9 @@
     </ClInclude>
     <ClInclude Include="PersistentStorage.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Protocol.h">
+      <Filter>Source Files\Protocol</Filter>
     </ClInclude>
     <ClInclude Include="imgui\imgui_rangeslider.h">
       <Filter>imgui\headers</Filter>

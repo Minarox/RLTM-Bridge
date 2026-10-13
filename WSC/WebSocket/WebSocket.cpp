@@ -19,16 +19,6 @@ namespace
 
 		return "unknown";
 	}
-
-	std::string BuildMessage(const std::string& topic, const json& payload)
-	{
-		json message = json::object();
-		message["topic"] = topic;
-		message["payload"] = payload;
-
-		// Replace the invalid UTF-8 characters (e.g. in a player name) instead of throwing
-		return message.dump(-1, ' ', false, json::error_handler_t::replace);
-	}
 }
 
 /*
@@ -149,7 +139,7 @@ void WSC::Send(Topic topic, const json& payload)
 
 	if (socket.getReadyState() != ix::ReadyState::Open) return;
 
-	CountSent(socket.send(BuildMessage(topicName, payload)));
+	CountSent(socket.send(Protocol::BuildMessage(topicName, payload)));
 }
 
 // Sends the current state of the game to the server, on (re)connection or when asked by the server
@@ -164,7 +154,7 @@ void WSC::ResendState()
 	if (socket.getReadyState() != ix::ReadyState::Open) return;
 
 	for (auto& [topic, payload] : cache.items())
-		CountSent(socket.send(BuildMessage(topic, payload)));
+		CountSent(socket.send(Protocol::BuildMessage(topic, payload)));
 }
 
 // Statistics shown in the settings window
