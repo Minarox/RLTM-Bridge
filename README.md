@@ -103,6 +103,12 @@ Each command is answered on the `response` topic with `{ "command": "<name>", "i
 
 Only these commands can be executed: an invalid message or command is answered with an error and never reaches the game.
 
+## 🔨 Build
+
+Open `WSC.sln` with Visual Studio 2022 and build the `Release | x64` configuration: the dependencies are installed by [vcpkg](https://vcpkg.io) (manifest mode) and the BakkesMod SDK is found from the BakkesMod installation.
+
+Each push is built by GitHub Actions (the DLL is available in the artifacts of the run), and a release is created with the DLL for each `v*` tag. The build number of the version comes from the CI, local builds keep the one of `version.h`.
+
 ## 🗂️ Project structure
 
 ```
