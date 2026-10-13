@@ -1,4 +1,4 @@
-build*
+/build*/
 !source/libs/*
 vcpkg_installed/
 # Build results
