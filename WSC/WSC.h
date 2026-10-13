@@ -140,6 +140,7 @@ private:
 		bool replay = false;
 		json clock = 0;
 		std::string lastStatTick;
+		std::chrono::steady_clock::time_point lastStatTickTime;
 		std::map<std::string, std::map<std::string, int>> statEvents; // "<uid>|<name>" -> stat event name -> count
 	};
 	MatchState match;

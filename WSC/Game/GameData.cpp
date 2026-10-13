@@ -14,6 +14,9 @@ namespace
 	// Bytes waiting to be sent above which the entities updates are skipped
 	constexpr size_t MAX_BUFFERED_BYTES = 64 * 1024;
 
+	// The same stat ticker message received again within this delay is a duplicate
+	constexpr auto STAT_TICKER_DUPLICATE_WINDOW = std::chrono::milliseconds(100);
+
 	// Playlist ID of the private matches
 	constexpr int PRIVATE_MATCH_PLAYLIST = 6;
 
@@ -192,14 +195,14 @@ void WSC::OnStatTicker(void* params)
 	const std::string eventName = event.GetEventName();
 	const std::string key = GetPlayerKey(payload);
 
-	// The stat ticker message is received twice for the same event, skip the duplicate
+	// The stat ticker message is received twice for the same event: skip the copies received right after it,
+	// but keep two real events in a row (e.g. two demolitions by the same player)
 	const std::string tick = eventName + '|' + key;
-	if (match.lastStatTick == tick)
-	{
-		match.lastStatTick.clear();
-		return;
-	}
+	const auto now = std::chrono::steady_clock::now();
+	if (match.lastStatTick == tick && now - match.lastStatTickTime < STAT_TICKER_DUPLICATE_WINDOW) return;
+
 	match.lastStatTick = tick;
+	match.lastStatTickTime = now;
 
 	if (match.started) match.statEvents[key][eventName]++;
 
