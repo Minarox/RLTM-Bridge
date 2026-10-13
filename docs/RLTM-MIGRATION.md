@@ -124,6 +124,7 @@ Envoyé toutes les 100 ms par défaut (réglable côté plugin), seulement penda
 ```
 - `speed` est en km/h, `location` en unités Unreal `[X, Y, Z]`, et `boost` va de 0 à 100.
 - `time` est une horloge monotone en millisecondes : **seule la différence entre deux messages a un sens**. Ne l'affiche pas comme une heure. Pour une minimap fluide, interpole les positions entre les deux derniers échantillons selon le temps écoulé.
+- L'envoi des entités peut être désactivé dans le plugin (`wsc_send_entities`) : le topic vaut alors `null`. Il en va de même pour `spectator` (`wsc_send_spectator`). Un overlay qui en dépend doit afficher un état vide, pas planter.
 - Le plugin peut sauter des mises à jour si le serveur ne lit pas assez vite. L'intervalle entre deux messages n'est donc pas garanti : utilise `time`, pas un intervalle supposé.
 
 ### `statistic` (événement ponctuel)
@@ -151,7 +152,7 @@ Format : `{ "command": "<nom>", "payload": { ... }, "id": "<optionnel, chaîne o
 | `ready` | | Se marquer prêt |
 | `hide_hud` | | Masquer le HUD spectateur |
 | `focus_player` | `{ "uid": "...", "name": "..." }` (au moins un des deux) | Centrer la caméra spectateur sur un joueur |
-| `set_setting` | `{ "name": "<cvar>", "value": <valeur> }` | Seuls `wsc_entities_interval`, `wsc_auto_save_replays`, `wsc_replay_name_format`, `wsc_auto_spectate`, `wsc_auto_ready`, `wsc_hide_hud` et `wsc_hide_stat_graphs` sont acceptés |
+| `set_setting` | `{ "name": "<cvar>", "value": <valeur> }` | Changer un réglage de données, de spectateur ou de fin de match : `wsc_send_entities`, `wsc_entities_interval`, `wsc_send_spectator`, `wsc_auto_spectate`, `wsc_hide_hud`, `wsc_hud_names`, `wsc_hud_match_info`, `wsc_hide_stat_graphs`, `wsc_auto_ready`, `wsc_auto_save_replays`, `wsc_replay_name_format` |
 | `set_replay_name` | `{ "blue": "<équipe>", "orange": "<équipe>", "game": <numéro> }` ou `{ "name": "<nom complet>" }` | Nommer le replay du match (voir ci-dessous) |
 | `clear_replay_name` | | Revenir au nom par défaut du jeu |
 
@@ -168,6 +169,8 @@ Le jeu ne connaît pas les équipes de RLTM. Pour que chaque replay sauvegardé 
 - **Quand l'envoyer** : dès que les équipes de la partie sont connues, au plus tard pendant la partie. Le nom ne vaut que pour **un seul match** et il est oublié à la fin du match. Envoyé après la fin d'une partie, il s'applique à la partie suivante.
 - Réponse : `"result": { "name": "Équipe 1 vs Équipe 2 - Match 3", "applied": true }`. `applied: false` signifie qu'il n'y a pas de match en cours ou que le match est terminé : le nom sera appliqué au début du match suivant.
 - La sauvegarde automatique des replays (`wsc_auto_save_replays`) doit être activée côté plugin pour que le replay soit enregistré.
+
+**Permissions** : l'utilisateur du plugin peut désactiver toutes les commandes (`wsc_server_control`), ou seulement certains groupes : caméra (`focus_player`), actions (`spectate`, `ready`, `hide_hud`), noms des replays (`set_replay_name`, `clear_replay_name`) et réglages (`set_setting`). Une commande désactivée est refusée avec `success: false` et une erreur du type `Command "focus_player" is disabled in the plugin settings` : affiche-la dans RLTM pour que l'opérateur sache quoi activer. `ping` et `resync` sont toujours autorisées.
 
 Limites côté plugin : messages de 16 Ko maximum, 32 niveaux d'imbrication maximum, 64 commandes en attente maximum, et toute commande inconnue est refusée. Le joueur peut désactiver toutes les commandes (`wsc_server_control`). Gère donc toujours `success: false`.
 

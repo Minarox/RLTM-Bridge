@@ -80,7 +80,7 @@ void WSC::HookEvents()
 	Hook("Function TAGame.GameEvent_Soccar_TA.EventMatchEnded", [this]() {
 		// Last chance before the replay is saved, the name is only for this match
 		ApplyReplayName();
-		replayName.clear();
+		SetReplayName("");
 		UpdateMatch();
 	});
 	Hook("Function TAGame.GameEvent_Soccar_TA.OnBallHasBeenHit", [this]() {

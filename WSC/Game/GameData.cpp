@@ -207,7 +207,7 @@ void WSC::OnTick()
 	ProcessServerCommands();
 
 	// Every frame, even during the replays and the pauses: only sent when the camera target changes
-	SendSpectatorTarget();
+	if (IsCvarEnabled(Cvars::SendSpectator)) SendSpectatorTarget();
 
 	if (!IsMatchLive()) return;
 
@@ -232,7 +232,7 @@ void WSC::OnTick()
 		else LOG("The server caught up, entities updates are resumed");
 	}
 
-	if (!overloaded) SendEntities(server);
+	if (!overloaded && IsCvarEnabled(Cvars::SendEntities)) SendEntities(server);
 }
 
 void WSC::SendEntities(ServerWrapper server)

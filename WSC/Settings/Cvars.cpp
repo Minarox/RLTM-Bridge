@@ -31,17 +31,39 @@ void WSC::RegisterCvars()
 	persistentStorage->RegisterPersistentCvar(Cvars::PingInterval, "1", "Ping interval (seconds)", true, true, 1)
 		.addOnValueChanged(onSocketSettingChanged);
 
-	persistentStorage->RegisterPersistentCvar(Cvars::ServerControl, "1", "Allow the server to control the game (spectator camera, ready, etc.)", true, true, 0, true, 1);
+	// Server control
+	persistentStorage->RegisterPersistentCvar(Cvars::ServerControl, "1", "Allow the server to send commands", true, true, 0, true, 1);
+	persistentStorage->RegisterPersistentCvar(Cvars::ServerAllowCamera, "1", "Allow the server to move the spectator camera", true, true, 0, true, 1);
+	persistentStorage->RegisterPersistentCvar(Cvars::ServerAllowActions, "1", "Allow the server to join the spectators, mark as ready and hide the HUD", true, true, 0, true, 1);
+	persistentStorage->RegisterPersistentCvar(Cvars::ServerAllowReplayName, "1", "Allow the server to name the replays", true, true, 0, true, 1);
+	persistentStorage->RegisterPersistentCvar(Cvars::ServerAllowSettings, "1", "Allow the server to change the game settings of the plugin", true, true, 0, true, 1);
 
-	// Game
-	persistentStorage->RegisterPersistentCvar(Cvars::EntitiesInterval, "100", "Interval between two entities updates (milliseconds)", true, true, 16);
+	// Data, the overlays are cleared when a topic is disabled
+	persistentStorage->RegisterPersistentCvar(Cvars::SendEntities, "1", "Send the balls and cars data", true, true, 0, true, 1)
+		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) { if (!cvar.getBoolValue()) Send(Topic::Entities, nullptr); });
+	persistentStorage->RegisterPersistentCvar(Cvars::EntitiesInterval, "100", "Interval between two entities updates (milliseconds)", true, true, 16, true, 1000);
+	persistentStorage->RegisterPersistentCvar(Cvars::SendSpectator, "1", "Send the player followed by the spectator camera", true, true, 0, true, 1)
+		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) { if (!cvar.getBoolValue()) Send(Topic::Spectator, nullptr); });
+
+	// Spectator
+	auto onHudSettingChanged = [this](std::string oldValue, CVarWrapper cvar) {
+		if (IsCvarEnabled(Cvars::HideHud)) HideSpectatorHud(0);
+		else RestoreSpectatorHud();
+	};
+	persistentStorage->RegisterPersistentCvar(Cvars::AutoSpectate, "1", "Join the spectators when joining a match", true, true, 0, true, 1);
+	persistentStorage->RegisterPersistentCvar(Cvars::HideHud, "1", "Hide the HUD when spectating", true, true, 0, true, 1)
+		.addOnValueChanged(onHudSettingChanged);
+	persistentStorage->RegisterPersistentCvar(Cvars::HudNames, "1", "Keep the players names when the HUD is hidden", true, true, 0, true, 1)
+		.addOnValueChanged(onHudSettingChanged);
+	persistentStorage->RegisterPersistentCvar(Cvars::HudMatchInfo, "1", "Keep the match info (score, clock) when the HUD is hidden", true, true, 0, true, 1)
+		.addOnValueChanged(onHudSettingChanged);
+	persistentStorage->RegisterPersistentCvar(Cvars::HideStatGraphs, "1", "Hide the engine statistics graphs (F10) when spectating", true, true, 0, true, 1);
+
+	// Match end
+	persistentStorage->RegisterPersistentCvar(Cvars::AutoReady, "1", "Mark as ready at the end of the match", true, true, 0, true, 1);
 	persistentStorage->RegisterPersistentCvar(Cvars::AutoSaveReplays, "1", "Save the replay at the end of the match", true, true, 0, true, 1)
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) { ApplyAutoSaveReplays(); });
 	persistentStorage->RegisterPersistentCvar(Cvars::ReplayNameFormat, "{blue} vs {orange} - Match {game}", "Name of the replays sent by the server, with {blue}, {orange} and {game}");
-	persistentStorage->RegisterPersistentCvar(Cvars::AutoSpectate, "1", "Join the spectators when joining a match", true, true, 0, true, 1);
-	persistentStorage->RegisterPersistentCvar(Cvars::AutoReady, "1", "Mark as ready at the end of the match", true, true, 0, true, 1);
-	persistentStorage->RegisterPersistentCvar(Cvars::HideHud, "1", "Hide the HUD when spectating", true, true, 0, true, 1);
-	persistentStorage->RegisterPersistentCvar(Cvars::HideStatGraphs, "1", "Hide the engine statistics graphs (F10) when spectating", true, true, 0, true, 1);
 }
 
 CVarWrapper WSC::GetCvar(const char* name)
@@ -62,6 +84,18 @@ void WSC::SetCvarFromUI(const char* name, const std::string& value)
 		CVarWrapper cvar = GetCvar(name);
 		if (cvar) cvar.setValue(value);
 	});
+}
+
+
+void WSC::ResetCvars()
+{
+	for (const char* name : Cvars::All)
+	{
+		CVarWrapper cvar = GetCvar(name);
+		if (cvar) cvar.ResetToDefault();
+	}
+
+	LOG("Settings reset to the default values");
 }
 
 

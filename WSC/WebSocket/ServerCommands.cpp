@@ -42,14 +42,19 @@ namespace
 	constexpr int MAX_GAME_NUMBER = 99;
 
 	// Plugin cvars the server is allowed to change with the "set_setting" command
+	// (not the connection nor the server control settings)
 	const char* const SERVER_SETTINGS[] = {
+		Cvars::SendEntities,
 		Cvars::EntitiesInterval,
-		Cvars::AutoSaveReplays,
-		Cvars::ReplayNameFormat,
+		Cvars::SendSpectator,
 		Cvars::AutoSpectate,
-		Cvars::AutoReady,
 		Cvars::HideHud,
-		Cvars::HideStatGraphs
+		Cvars::HudNames,
+		Cvars::HudMatchInfo,
+		Cvars::HideStatGraphs,
+		Cvars::AutoReady,
+		Cvars::AutoSaveReplays,
+		Cvars::ReplayNameFormat
 	};
 
 	// Error of a command, its message is sent back to the server
@@ -176,43 +181,48 @@ namespace
 	}
 }
 
+void WSC::RegisterServerCommand(const std::string& name, const char* permission, CommandHandler handler)
+{
+	commandHandlers[name] = RegisteredCommand{ permission, std::move(handler) };
+}
+
 void WSC::RegisterServerCommands()
 {
-	commandHandlers["ping"] = [](const json& payload) -> json { return nullptr; };
+	RegisterServerCommand("ping", nullptr, [](const json& payload) -> json { return nullptr; });
 
 	// Send the current state of every topic again (match, scoreboard, spectator, players, entities)
-	commandHandlers["resync"] = [this](const json& payload) -> json {
+	RegisterServerCommand("resync", nullptr, [this](const json& payload) -> json {
 		ResendState();
 		return nullptr;
-	};
+	});
 
-	commandHandlers["spectate"] = [this](const json& payload) -> json {
+	RegisterServerCommand("spectate", Cvars::ServerAllowActions, [this](const json& payload) -> json {
 		if (!JoinSpectators(true)) throw CommandError("Not in a match");
 		return nullptr;
-	};
+	});
 
-	commandHandlers["ready"] = [this](const json& payload) -> json {
+	RegisterServerCommand("ready", Cvars::ServerAllowActions, [this](const json& payload) -> json {
 		if (!ReadyUp(true)) throw CommandError("Not in a match");
 		return nullptr;
-	};
+	});
 
-	commandHandlers["hide_hud"] = [this](const json& payload) -> json {
+	RegisterServerCommand("hide_hud", Cvars::ServerAllowActions, [this](const json& payload) -> json {
 		if (!HideSpectatorHud(0, true)) throw CommandError("Not spectating a match");
 		return nullptr;
-	};
+	});
 
 	// Payload: { "uid": "<uid>", "name": "<name>" }, at least one of them
-	commandHandlers["focus_player"] = [this](const json& payload) -> json {
+	RegisterServerCommand("focus_player", Cvars::ServerAllowCamera, [this](const json& payload) -> json {
 		const std::string uid = GetOptionalString(payload, "uid");
 		const std::string name = GetOptionalString(payload, "name");
 		if (uid.empty() && name.empty()) throw CommandError("\"uid\" or \"name\" is required");
 
 		if (!FocusPlayer(uid, name)) throw CommandError("Player not found or camera not available");
 		return nullptr;
-	};
+	});
 
 	// Payload: { "name": "<cvar>", "value": <string, number or boolean> }
-	commandHandlers["set_setting"] = [this](const json& payload) -> json {
+	RegisterServerCommand("set_setting", Cvars::ServerAllowSettings, [this](const json& payload) -> json {
 		const std::string name = GetRequiredString(payload, "name");
 		const std::string value = GetCvarValue(payload, "value");
 
@@ -224,39 +234,45 @@ void WSC::RegisterServerCommands()
 
 		cvar.setValue(value);
 		return nullptr;
-	};
+	});
 
 	// Name of the replay of the current match, or of the next one if the current match is ended
 	// Payload: { "blue": "<team>", "orange": "<team>", "game": <number> } formatted with wsc_replay_name_format,
 	// or { "name": "<replay name>" } to give the whole name
-	commandHandlers["set_replay_name"] = [this](const json& payload) -> json {
+	RegisterServerCommand("set_replay_name", Cvars::ServerAllowReplayName, [this](const json& payload) -> json {
 		std::string name = GetOptionalString(payload, "name");
 
 		if (name.empty())
-		{
-			CVarWrapper format = GetCvar(Cvars::ReplayNameFormat);
-			name = FormatReplayName(format ? format.getStringValue() : "", {
-				{ "blue", GetRequiredString(payload, "blue") },
-				{ "orange", GetRequiredString(payload, "orange") },
-				{ "game", std::to_string(GetRequiredInt(payload, "game", 1, MAX_GAME_NUMBER)) }
-			});
-		}
+			name = BuildReplayName(GetRequiredString(payload, "blue"), GetRequiredString(payload, "orange"), GetRequiredInt(payload, "game", 1, MAX_GAME_NUMBER));
+		else
+			name = SanitizeReplayName(name);
 
-		name = SanitizeReplayName(name);
 		if (name.empty()) throw CommandError("The replay name is empty");
 
-		replayName = name;
+		SetReplayName(name);
 
 		json result = json::object();
-		result["name"] = replayName;
+		result["name"] = name;
 		result["applied"] = !match.ended && ApplyReplayName(); // false: applied when the next match starts
 		return result;
-	};
+	});
 
-	commandHandlers["clear_replay_name"] = [this](const json& payload) -> json {
-		replayName.clear();
+	RegisterServerCommand("clear_replay_name", Cvars::ServerAllowReplayName, [this](const json& payload) -> json {
+		SetReplayName("");
 		return nullptr;
-	};
+	});
+}
+
+// Replay name from the wsc_replay_name_format cvar, also used for the preview of the settings window
+std::string WSC::BuildReplayName(const std::string& blue, const std::string& orange, int game)
+{
+	CVarWrapper format = GetCvar(Cvars::ReplayNameFormat);
+
+	return SanitizeReplayName(FormatReplayName(format ? format.getStringValue() : "", {
+		{ "blue", blue },
+		{ "orange", orange },
+		{ "game", std::to_string(game) }
+	}));
 }
 
 // Called from the ixwebsocket thread: only validate and queue the command
@@ -336,7 +352,8 @@ void WSC::ExecuteServerCommand(const ServerCommand& command)
 
 		if (!IsCvarEnabled(Cvars::ServerControl)) error = "Server control is disabled";
 		else if (handler == commandHandlers.end()) error = fmt::format("Unknown command \"{}\"", command.name);
-		else result = handler->second(command.payload);
+		else if (handler->second.permission && !IsCvarEnabled(handler->second.permission)) error = fmt::format("Command \"{}\" is disabled in the plugin settings", command.name);
+		else result = handler->second.handler(command.payload);
 	}
 	catch (const CommandError& e)
 	{
@@ -352,6 +369,13 @@ void WSC::ExecuteServerCommand(const ServerCommand& command)
 	}
 
 	if (!error.empty()) LOG("Server command \"{}\" failed: {}", command.name, error);
+
+	commandsReceived++;
+	{
+		std::lock_guard<std::mutex> lock(lastCommandMutex);
+		lastCommand = error.empty() ? command.name : fmt::format("{} (failed: {})", command.name, error);
+	}
+
 	SendCommandResponse(command.name, command.id, error, error.empty() ? result : json());
 }
 

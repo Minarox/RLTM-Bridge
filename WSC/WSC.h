@@ -41,16 +41,39 @@ namespace Cvars
 	inline constexpr const char* MaxWaitBetweenRetries = "wsc_max_wait_between_retries";
 	inline constexpr const char* PerMessageDeflate = "wsc_per_message_deflate";
 	inline constexpr const char* PingInterval = "wsc_ping_interval";
-	inline constexpr const char* ServerControl = "wsc_server_control";
 
-	// Game
+	// Server control
+	inline constexpr const char* ServerControl = "wsc_server_control";
+	inline constexpr const char* ServerAllowCamera = "wsc_server_allow_camera";
+	inline constexpr const char* ServerAllowActions = "wsc_server_allow_actions";
+	inline constexpr const char* ServerAllowReplayName = "wsc_server_allow_replay_name";
+	inline constexpr const char* ServerAllowSettings = "wsc_server_allow_settings";
+
+	// Data
+	inline constexpr const char* SendEntities = "wsc_send_entities";
 	inline constexpr const char* EntitiesInterval = "wsc_entities_interval";
+	inline constexpr const char* SendSpectator = "wsc_send_spectator";
+
+	// Spectator
+	inline constexpr const char* AutoSpectate = "wsc_auto_spectate";
+	inline constexpr const char* HideHud = "wsc_hide_hud";
+	inline constexpr const char* HudNames = "wsc_hud_names";
+	inline constexpr const char* HudMatchInfo = "wsc_hud_match_info";
+	inline constexpr const char* HideStatGraphs = "wsc_hide_stat_graphs";
+
+	// Match end
+	inline constexpr const char* AutoReady = "wsc_auto_ready";
 	inline constexpr const char* AutoSaveReplays = "wsc_auto_save_replays";
 	inline constexpr const char* ReplayNameFormat = "wsc_replay_name_format";
-	inline constexpr const char* AutoSpectate = "wsc_auto_spectate";
-	inline constexpr const char* AutoReady = "wsc_auto_ready";
-	inline constexpr const char* HideHud = "wsc_hide_hud";
-	inline constexpr const char* HideStatGraphs = "wsc_hide_stat_graphs";
+
+	// Every cvar of the plugin (reset to the default values)
+	inline constexpr const char* All[] = {
+		Url, AutoConnect, AutoReconnect, HandshakeTimeout, MinWaitBetweenRetries, MaxWaitBetweenRetries, PerMessageDeflate, PingInterval,
+		ServerControl, ServerAllowCamera, ServerAllowActions, ServerAllowReplayName, ServerAllowSettings,
+		SendEntities, EntitiesInterval, SendSpectator,
+		AutoSpectate, HideHud, HudNames, HudMatchInfo, HideStatGraphs,
+		AutoReady, AutoSaveReplays, ReplayNameFormat
+	};
 }
 
 // Topics of the messages sent to the server: { "topic": "<topic>", "payload": <data> }
@@ -95,6 +118,7 @@ private:
 	CVarWrapper GetCvar(const char* name);
 	bool IsCvarEnabled(const char* name);
 	void SetCvarFromUI(const char* name, const std::string& value);
+	void ResetCvars();
 
 	// Settings window (Settings/SettingsWindow.cpp)
 	struct TextInput
@@ -102,13 +126,25 @@ private:
 		std::array<char, 512> buffer{};
 		bool active = false;
 	};
+	struct IntInput
+	{
+		int value = 0;
+		bool active = false;
+	};
 	TextInput urlInput;
 	TextInput replayNameFormatInput;
+	IntInput entitiesIntervalInput;
 	void RenderConnection();
+	void RenderStatus();
+	void RenderDataSettings();
+	void RenderServerControlSettings();
+	void RenderSpectatorSettings();
+	void RenderMatchEndSettings();
 	void RenderWebSocketSettings();
-	void RenderGameSettings();
-	void RenderCvarCheckbox(const char* label, const char* cvarName, const char* tooltip);
+	void RenderResetSettings();
+	bool RenderCvarCheckbox(const char* label, const char* cvarName, const char* tooltip);
 	void RenderCvarInputInt(const char* label, const char* cvarName, const char* tooltip);
+	void RenderCvarSliderInt(const char* label, const char* cvarName, IntInput& input, int min, int max, const char* format, const char* tooltip);
 	void RenderCvarInputText(const char* label, const char* cvarName, TextInput& input, const char* tooltip);
 
 	// WebSocket (WebSocket/WebSocket.cpp)
@@ -119,12 +155,15 @@ private:
 	std::mutex socketStatusMutex;
 	std::string socketLastError;
 	std::chrono::system_clock::time_point socketStatusSince = std::chrono::system_clock::now();
+	std::atomic<uint64_t> messagesSent = 0;
+	std::atomic<uint64_t> bytesSent = 0; // On the network, after compression
 	void InitSocket();
 	void ConfigureSocket();
 	void Connect();
 	void Disconnect();
 	void Send(Topic topic, const json& payload);
 	void ResendState();
+	void CountSent(const ix::WebSocketSendInfo& info);
 	void SetSocketStatus(const std::string& error = "");
 
 	// Server commands (WebSocket/ServerCommands.cpp)
@@ -135,13 +174,23 @@ private:
 		json id; // Optional, sent back in the response
 	};
 	using CommandHandler = std::function<json(const json& payload)>; // Returns the result sent in the response (null for none)
-	std::map<std::string, CommandHandler> commandHandlers;
+	struct RegisteredCommand
+	{
+		const char* permission; // Cvar allowing the command, nullptr if always allowed
+		CommandHandler handler;
+	};
+	std::map<std::string, RegisteredCommand> commandHandlers;
+	std::atomic<uint64_t> commandsReceived = 0;
+	std::mutex lastCommandMutex;
+	std::string lastCommand; // Name and result of the last command, shown in the settings window
 	std::mutex pendingCommandsMutex;
 	std::deque<ServerCommand> pendingCommands;
 	void RegisterServerCommands();
+	void RegisterServerCommand(const std::string& name, const char* permission, CommandHandler handler);
 	void OnServerMessage(const std::string& message);
 	void ProcessServerCommands();
 	void ExecuteServerCommand(const ServerCommand& command);
+	std::string BuildReplayName(const std::string& blue, const std::string& orange, int game);
 	void SendCommandResponse(const std::string& command, const json& id, const std::string& error = "", const json& result = nullptr);
 
 	// Game data (Game/GameData.cpp)
@@ -174,11 +223,15 @@ private:
 
 	// Game actions (Game/GameActions.cpp)
 	std::string initialAutoSaveReplay; // value of "ranked_autosavereplay_all" before the plugin changed it
-	std::string replayName; // Name of the replay of the current or next match, set by the server
+	std::mutex replayNameMutex;
+	std::string replayName; // Name of the replay of the current or next match, set by the server (read by the settings window)
+	std::string GetReplayName();
+	void SetReplayName(const std::string& name);
 	void ApplyAutoSaveReplays();
 	void RestoreAutoSaveReplays();
 	bool ApplyReplayName();
 	bool HideSpectatorHud(int delay, bool force = false);
+	bool RestoreSpectatorHud();
 	bool HideStatGraphs();
 	bool ReadyUp(bool force = false);
 	bool JoinSpectators(bool force = false);

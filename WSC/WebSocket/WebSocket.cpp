@@ -149,7 +149,7 @@ void WSC::Send(Topic topic, const json& payload)
 
 	if (socket.getReadyState() != ix::ReadyState::Open) return;
 
-	socket.send(BuildMessage(topicName, payload));
+	CountSent(socket.send(BuildMessage(topicName, payload)));
 }
 
 // Sends the current state of the game to the server, on (re)connection or when asked by the server
@@ -164,7 +164,16 @@ void WSC::ResendState()
 	if (socket.getReadyState() != ix::ReadyState::Open) return;
 
 	for (auto& [topic, payload] : cache.items())
-		socket.send(BuildMessage(topic, payload));
+		CountSent(socket.send(BuildMessage(topic, payload)));
+}
+
+// Statistics shown in the settings window
+void WSC::CountSent(const ix::WebSocketSendInfo& info)
+{
+	if (!info.success) return;
+
+	messagesSent++;
+	bytesSent += info.wireSize;
 }
 
 void WSC::SetSocketStatus(const std::string& error)

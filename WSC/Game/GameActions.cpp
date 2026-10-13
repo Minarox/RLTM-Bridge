@@ -37,10 +37,23 @@ void WSC::RestoreAutoSaveReplays()
 }
 
 
+std::string WSC::GetReplayName()
+{
+	std::lock_guard<std::mutex> lock(replayNameMutex);
+	return replayName;
+}
+
+void WSC::SetReplayName(const std::string& name)
+{
+	std::lock_guard<std::mutex> lock(replayNameMutex);
+	replayName = name;
+}
+
 // Gives its name to the replay recorded during the match, before it is saved at the end of the match
 bool WSC::ApplyReplayName()
 {
-	if (replayName.empty()) return false;
+	const std::string name = GetReplayName();
+	if (name.empty()) return false;
 
 	ServerWrapper server = GetServerWrapper();
 	if (!server) return false;
@@ -51,7 +64,7 @@ bool WSC::ApplyReplayName()
 	ReplaySoccarWrapper replay = replayDirector.GetReplay();
 	if (!replay) return false;
 
-	replay.SetReplayName(replayName);
+	replay.SetReplayName(name);
 	return true;
 }
 
@@ -77,7 +90,23 @@ bool WSC::HideSpectatorHud(int delay, bool force)
 	if (!player || !player.IsSpectator()) return false;
 
 	// Wait for the spectator HUD to be initialized
-	cvarManager->executeCommand("sleep " + std::to_string(delay) + "; sleep 16; replay_gui hud 0; replay_gui names 1; replay_gui matchinfo 1", false);
+	cvarManager->executeCommand(fmt::format("sleep {}; sleep 16; replay_gui hud 0; replay_gui names {}; replay_gui matchinfo {}",
+		delay, IsCvarEnabled(Cvars::HudNames) ? 1 : 0, IsCvarEnabled(Cvars::HudMatchInfo) ? 1 : 0), false);
+	return true;
+}
+
+bool WSC::RestoreSpectatorHud()
+{
+	ServerWrapper server = GetServerWrapper();
+	if (!server) return false;
+
+	PlayerControllerWrapper primaryPlayer = server.GetLocalPrimaryPlayer();
+	if (!primaryPlayer) return false;
+
+	PriWrapper player = primaryPlayer.GetPRI();
+	if (!player || !player.IsSpectator()) return false;
+
+	cvarManager->executeCommand("replay_gui hud 1; replay_gui names 1; replay_gui matchinfo 1", false);
 	return true;
 }
 
