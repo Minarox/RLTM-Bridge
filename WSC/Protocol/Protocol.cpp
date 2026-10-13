@@ -159,6 +159,21 @@ namespace Protocol
 		return sanitized;
 	}
 
+	std::string SanitizeHeaderValue(const std::string& value)
+	{
+		std::string sanitized;
+		for (char c : value)
+		{
+			const unsigned char byte = static_cast<unsigned char>(c);
+			if (byte >= 0x20 && byte != 0x7F) sanitized += c;
+		}
+
+		const size_t first = sanitized.find_first_not_of(' ');
+		if (first == std::string::npos) return "";
+
+		return sanitized.substr(first, sanitized.find_last_not_of(' ') - first + 1);
+	}
+
 	std::string ToHexColor(float r, float g, float b)
 	{
 		auto component = [](float value) {

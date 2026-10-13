@@ -53,7 +53,9 @@ void WSC::RenderSettings()
 
 void WSC::RenderConnection()
 {
-	RenderCvarInputText("Server URL", Cvars::Url, urlInput, "WebSocket server URL, e.g. ws://localhost:3000");
+	RenderCvarInputText("Server URL", Cvars::Url, urlInput, "WebSocket server URL, e.g. ws://localhost:3000 or wss://example.com");
+	RenderCvarInputText("Client name", Cvars::ClientName, clientNameInput, "Name of this computer for the server, to tell the matches apart when several computers are connected (the name of the computer if empty)");
+	RenderCvarInputText("Token", Cvars::Token, tokenInput, "Optional token given by the server to authenticate this client (sent in the Authorization header)", ImGuiInputTextFlags_Password);
 	RenderCvarCheckbox("Connect when the plugin is loaded", Cvars::AutoConnect, nullptr);
 
 	// Connection state
@@ -264,7 +266,7 @@ void WSC::RenderCvarSliderInt(const char* label, const char* cvarName, IntInput&
 }
 
 // Text input of a cvar, applied when the input loses focus
-void WSC::RenderCvarInputText(const char* label, const char* cvarName, TextInput& input, const char* tooltip)
+void WSC::RenderCvarInputText(const char* label, const char* cvarName, TextInput& input, const char* tooltip, ImGuiInputTextFlags flags)
 {
 	CVarWrapper cvar = GetCvar(cvarName);
 	if (!cvar) return;
@@ -277,7 +279,7 @@ void WSC::RenderCvarInputText(const char* label, const char* cvarName, TextInput
 		input.buffer[length] = '\0';
 	}
 
-	ImGui::InputText(label, input.buffer.data(), input.buffer.size());
+	ImGui::InputText(label, input.buffer.data(), input.buffer.size(), flags);
 	input.active = ImGui::IsItemActive();
 	if (ImGui::IsItemDeactivatedAfterEdit()) SetCvarFromUI(cvarName, input.buffer.data());
 	RenderTooltip(tooltip);

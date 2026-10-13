@@ -64,6 +64,9 @@ namespace Protocol
 	// Removes the control characters and the surrounding spaces, limits the size without cutting a UTF-8 character
 	std::string SanitizeReplayName(const std::string& name);
 
+	// Value of an HTTP header: without the control characters (no header injection) nor the surrounding spaces
+	std::string SanitizeHeaderValue(const std::string& value);
+
 	// "#RRGGBB" from color components between 0 and 1 (clamped)
 	std::string ToHexColor(float r, float g, float b);
 }

@@ -54,6 +54,8 @@ The settings window is organized by feature: connection to the server, status (m
 | --- | --- | --- |
 | **Connection** | | |
 | `wsc_url` | `ws://localhost:3000` | URL of the WebSocket server, `ws://` or `wss://` (TLS, with the root certificates of Windows) |
+| `wsc_client_name` | | Name of this client for the server (the name of the computer if empty), sent in the `X-WSC-Client` header and the `plugin` message |
+| `wsc_token` | | Optional token to authenticate this client, sent in the `Authorization: Bearer <token>` header |
 | `wsc_auto_connect` | `0` | Connect to the server when the plugin is loaded |
 | `wsc_auto_reconnect` | `1` | Reconnect automatically to the server |
 | `wsc_handshake_timeout` | `3` | Handshake timeout (seconds) |
@@ -93,7 +95,7 @@ The settings window is organized by feature: connection to the server, status (m
 
 Every message sent to the server is a JSON object `{ "topic": "<topic>", "payload": <data> }`:
 
-- `plugin` - Sent first on each connection: plugin `version` and `protocol` version of the messages format (currently `2`)
+- `plugin` - Sent first on each connection: plugin `version`, `protocol` version of the messages format (currently `2`) and `client` name
 - `match` - State of the match (arena, score, clock and flags)
 - `scoreboard` - Statistics of each player (score, goals, saves, etc. and the `events` counters received for the player, a missing event means 0)
 - `spectator` - Player followed by the spectator camera (`target`, `null` with the free camera) and camera state (`camera`)

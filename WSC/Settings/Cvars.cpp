@@ -17,6 +17,15 @@ void WSC::RegisterCvars()
 			// Restart the connection on the new URL
 			if (socketRunning) Connect();
 		});
+	// Sent in the headers of the connection: restart the connection when they change
+	auto onIdentityChanged = [this](std::string oldValue, CVarWrapper cvar) {
+		ConfigureSocket();
+		if (socketRunning) Connect();
+	};
+	persistentStorage->RegisterPersistentCvar(Cvars::ClientName, "", "Name of this client for the server (the name of the computer if empty)")
+		.addOnValueChanged(onIdentityChanged);
+	persistentStorage->RegisterPersistentCvar(Cvars::Token, "", "Token sent to the server to authenticate this client (optional)", false)
+		.addOnValueChanged(onIdentityChanged);
 	persistentStorage->RegisterPersistentCvar(Cvars::AutoConnect, "0", "Connect to the server when the plugin is loaded", true, true, 0, true, 1);
 	persistentStorage->RegisterPersistentCvar(Cvars::AutoReconnect, "1", "Reconnect automatically to the server", true, true, 0, true, 1)
 		.addOnValueChanged(onSocketSettingChanged);

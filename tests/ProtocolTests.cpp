@@ -116,6 +116,12 @@ namespace
 		Check(BuildMessage("players", json::array({ "\xff" })).find("\xef\xbf\xbd") != std::string::npos, "invalid UTF-8 replaced");
 	}
 
+	void TestHeaders()
+	{
+		Check(SanitizeHeaderValue(" Caster 1 ") == "Caster 1", "header spaces");
+		Check(SanitizeHeaderValue("token\r\nX-Injected: 1") == "tokenX-Injected: 1", "header injection");
+	}
+
 	void TestColors()
 	{
 		Check(ToHexColor(1.0f, 0.5f, 0.0f) == "#FF8000", "hex color");
@@ -130,6 +136,7 @@ int main()
 	TestParameters();
 	TestReplayName();
 	TestMessages();
+	TestHeaders();
 	TestColors();
 
 	if (failures) std::cout << failures << " test(s) failed\n";

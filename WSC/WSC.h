@@ -35,6 +35,8 @@ namespace Cvars
 {
 	// WebSocket
 	inline constexpr const char* Url = "wsc_url";
+	inline constexpr const char* ClientName = "wsc_client_name";
+	inline constexpr const char* Token = "wsc_token";
 	inline constexpr const char* AutoConnect = "wsc_auto_connect";
 	inline constexpr const char* AutoReconnect = "wsc_auto_reconnect";
 	inline constexpr const char* HandshakeTimeout = "wsc_handshake_timeout";
@@ -70,7 +72,7 @@ namespace Cvars
 
 	// Every cvar of the plugin (reset to the default values)
 	inline constexpr const char* All[] = {
-		Url, AutoConnect, AutoReconnect, HandshakeTimeout, MinWaitBetweenRetries, MaxWaitBetweenRetries, PerMessageDeflate, PingInterval, Debug,
+		Url, ClientName, Token, AutoConnect, AutoReconnect, HandshakeTimeout, MinWaitBetweenRetries, MaxWaitBetweenRetries, PerMessageDeflate, PingInterval, Debug,
 		ServerControl, ServerAllowCamera, ServerAllowActions, ServerAllowReplayName, ServerAllowSettings,
 		SendEntities, EntitiesInterval, SendSpectator,
 		AutoSpectate, HideHud, HudNames, HudMatchInfo, HideStatGraphs,
@@ -134,6 +136,8 @@ private:
 		bool active = false;
 	};
 	TextInput urlInput;
+	TextInput clientNameInput;
+	TextInput tokenInput;
 	TextInput replayNameFormatInput;
 	IntInput entitiesIntervalInput;
 	void RenderConnection();
@@ -147,7 +151,7 @@ private:
 	bool RenderCvarCheckbox(const char* label, const char* cvarName, const char* tooltip);
 	void RenderCvarInputInt(const char* label, const char* cvarName, const char* tooltip);
 	void RenderCvarSliderInt(const char* label, const char* cvarName, IntInput& input, int min, int max, const char* format, const char* tooltip);
-	void RenderCvarInputText(const char* label, const char* cvarName, TextInput& input, const char* tooltip);
+	void RenderCvarInputText(const char* label, const char* cvarName, TextInput& input, const char* tooltip, ImGuiInputTextFlags flags = 0);
 
 	// WebSocket (WebSocket/WebSocket.cpp)
 	ix::WebSocket socket;
@@ -160,6 +164,9 @@ private:
 	std::atomic<bool> debug = false; // Copy of the wsc_debug cvar, read from every thread
 	std::atomic<uint64_t> messagesSent = 0;
 	std::atomic<uint64_t> bytesSent = 0; // On the network, after compression
+	std::mutex pluginInfoMutex;
+	json pluginInfo; // Payload of the "plugin" message sent on each connection (version, client name)
+	std::string GetClientName();
 	void InitSocket();
 	void ConfigureSocket();
 	void Connect();

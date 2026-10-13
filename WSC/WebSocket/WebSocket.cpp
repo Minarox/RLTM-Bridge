@@ -43,9 +43,11 @@ void WSC::InitSocket()
 				SetSocketStatus();
 
 				// Let the server check that it understands the messages, then send it the current state of the game
-				json plugin = json::object();
-				plugin["version"] = plugin_version;
-				plugin["protocol"] = protocol_version;
+				json plugin;
+				{
+					std::lock_guard<std::mutex> lock(pluginInfoMutex);
+					plugin = pluginInfo;
+				}
 				Send(Topic::Plugin, plugin);
 
 				ResendState();
@@ -96,6 +98,36 @@ void WSC::ConfigureSocket()
 	if (CVarWrapper cvar = GetCvar(Cvars::PingInterval)) socket.setPingInterval(cvar.getIntValue());
 	if (CVarWrapper cvar = GetCvar(Cvars::MinWaitBetweenRetries)) socket.setMinWaitBetweenReconnectionRetries(cvar.getIntValue());
 	if (CVarWrapper cvar = GetCvar(Cvars::MaxWaitBetweenRetries)) socket.setMaxWaitBetweenReconnectionRetries(cvar.getIntValue());
+
+	// Identity of this client, sent in the headers of the connection so the server can reject an unknown client
+	const std::string clientName = GetClientName();
+	ix::WebSocketHttpHeaders headers;
+	headers["X-WSC-Client"] = clientName;
+
+	CVarWrapper token = GetCvar(Cvars::Token);
+	const std::string tokenValue = token ? Protocol::SanitizeHeaderValue(token.getStringValue()) : "";
+	if (!tokenValue.empty()) headers["Authorization"] = "Bearer " + tokenValue;
+	socket.setExtraHeaders(headers);
+
+	// Built here (game thread) because it is sent from the ixwebsocket thread
+	std::lock_guard<std::mutex> lock(pluginInfoMutex);
+	pluginInfo = json::object();
+	pluginInfo["version"] = plugin_version;
+	pluginInfo["protocol"] = protocol_version;
+	pluginInfo["client"] = clientName;
+}
+
+// Name of this client for the server: the wsc_client_name cvar, or the name of the computer
+std::string WSC::GetClientName()
+{
+	CVarWrapper cvar = GetCvar(Cvars::ClientName);
+	std::string name = cvar ? Protocol::SanitizeHeaderValue(cvar.getStringValue()) : "";
+	if (!name.empty()) return name;
+
+	const char* computerName = std::getenv("COMPUTERNAME");
+	name = computerName ? Protocol::SanitizeHeaderValue(computerName) : "";
+
+	return name.empty() ? "WSC" : name;
 }
 
 void WSC::Connect()
