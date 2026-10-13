@@ -58,6 +58,7 @@ enum class Topic
 	Plugin,
 	Match,
 	Scoreboard,
+	Spectator,
 	Statistic,
 	Entities,
 	Players,
@@ -161,6 +162,7 @@ private:
 	void OnTick();
 	void SendEntities(ServerWrapper server);
 	void SendPlayers(ServerWrapper server);
+	void SendSpectatorTarget();
 	void ResetMatch();
 
 	// Game actions (Game/GameActions.cpp)

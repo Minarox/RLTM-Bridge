@@ -10,6 +10,7 @@ namespace
 			case Topic::Plugin: return "plugin";
 			case Topic::Match: return "match";
 			case Topic::Scoreboard: return "scoreboard";
+			case Topic::Spectator: return "spectator";
 			case Topic::Statistic: return "statistic";
 			case Topic::Entities: return "entities";
 			case Topic::Players: return "players";
@@ -136,8 +137,8 @@ void WSC::Send(Topic topic, const json& payload)
 {
 	const std::string topicName = GetTopicName(topic);
 
-	// Match, scoreboard, players and entities are states, the other topics are one-shot messages
-	if (topic == Topic::Match || topic == Topic::Scoreboard || topic == Topic::Players || topic == Topic::Entities)
+	// Match, scoreboard, spectator, players and entities are states, the other topics are one-shot messages
+	if (topic == Topic::Match || topic == Topic::Scoreboard || topic == Topic::Spectator || topic == Topic::Players || topic == Topic::Entities)
 	{
 		std::lock_guard<std::mutex> lock(sentCacheMutex);
 

@@ -106,7 +106,7 @@ void WSC::RegisterServerCommands()
 {
 	commandHandlers["ping"] = [](const json& payload) {};
 
-	// Send the current state of every topic again (match, scoreboard, players, entities)
+	// Send the current state of every topic again (match, scoreboard, spectator, players, entities)
 	commandHandlers["resync"] = [this](const json& payload) { ResendState(); };
 
 	commandHandlers["spectate"] = [this](const json& payload) {

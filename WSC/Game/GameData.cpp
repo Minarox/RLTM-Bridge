@@ -206,6 +206,9 @@ void WSC::OnTick()
 {
 	ProcessServerCommands();
 
+	// Every frame, even during the replays and the pauses: only sent when the camera target changes
+	SendSpectatorTarget();
+
 	if (!IsMatchLive()) return;
 
 	CVarWrapper intervalCvar = GetCvar(Cvars::EntitiesInterval);
@@ -304,10 +307,46 @@ void WSC::SendPlayers(ServerWrapper server)
 	Send(Topic::Players, players);
 }
 
+void WSC::SendSpectatorTarget()
+{
+	// No match: no target (only sent once, the payload is compared with the last one sent)
+	ServerWrapper server = GetServerWrapper();
+	CameraWrapper camera = gameWrapper->GetCamera();
+	if (!server || !camera)
+	{
+		Send(Topic::Spectator, nullptr);
+		return;
+	}
+
+	json payload = json::object();
+	payload["camera"] = camera.GetCameraState();
+	payload["target"] = nullptr;
+
+	// The view target points to the PRI of the followed player, and to nothing with the free camera.
+	// It is compared to the players of the match instead of being used directly, in case it isn't a valid player.
+	const uintptr_t targetPri = reinterpret_cast<uintptr_t>(camera.GetViewTarget().PRI);
+	if (targetPri)
+	{
+		for (PriWrapper player : server.GetPRIs())
+		{
+			if (!player || player.memory_address != targetPri || player.GetTeamNum() == NO_TEAM) continue;
+
+			json target = json::object();
+			if (!GetPlayerIdentity(player, target)) break;
+
+			target["teamIndex"] = player.GetTeamNum();
+			payload["target"] = target;
+			break;
+		}
+	}
+
+	Send(Topic::Spectator, payload);
+}
+
 void WSC::ResetMatch()
 {
 	match = MatchState();
 
-	for (Topic topic : { Topic::Match, Topic::Scoreboard, Topic::Entities, Topic::Players })
+	for (Topic topic : { Topic::Match, Topic::Scoreboard, Topic::Spectator, Topic::Entities, Topic::Players })
 		Send(topic, nullptr);
 }

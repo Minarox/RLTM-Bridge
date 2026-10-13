@@ -21,6 +21,7 @@ Le format des messages du plugin a changé. Ta mission : adapter RLTM à ce nouv
 | 4 | Nouveau champ **`entities.time`** (ms, horloge monotone) | Nouveau : permet d'interpoler les positions |
 | 5 | Nouveau topic **`plugin`**, envoyé en premier à chaque connexion : `{ version, protocol }` | Nouveau : vérifier `protocol === 2` |
 | 6 | Le plugin accepte des **commandes** du serveur et répond sur le topic **`response`** | Nouveau : optionnel |
+| 7 | Nouveau topic **`spectator`** : le joueur suivi par la caméra spectateur, `null` en caméra libre | Nouveau : overlay dynamique du joueur regardé |
 
 Un plugin v1 n'envoie jamais de message `plugin`. Si des messages arrivent sans `plugin` préalable, c'est un ancien plugin : affiche un avertissement clair (« plugin WSC trop ancien, mettez-le à jour »). Ne cherche pas à gérer les deux formats.
 
@@ -28,7 +29,7 @@ Un plugin v1 n'envoie jamais de message `plugin`. Si des messages arrivent sans 
 
 Chaque message est un objet JSON `{ "topic": "<topic>", "payload": <données> }`.
 
-Les topics **d'état** (`match`, `scoreboard`, `players`, `entities`) ne sont envoyés que lorsqu'ils changent, et sont tous renvoyés à chaque (re)connexion. Un payload `null` signifie « plus de match » : il faut vider l'état correspondant. Les topics `plugin`, `statistic` et `response` sont des événements ponctuels.
+Les topics **d'état** (`match`, `scoreboard`, `spectator`, `players`, `entities`) ne sont envoyés que lorsqu'ils changent, et sont tous renvoyés à chaque (re)connexion. Un payload `null` signifie « plus de match » : il faut vider l'état correspondant. Les topics `plugin`, `statistic` et `response` sont des événements ponctuels.
 
 ### `plugin` (à la connexion)
 ```json
@@ -81,6 +82,20 @@ Objet indexé par la clé de joueur `"<uid>|<name>"` (les bots partagent le mêm
 ```
 `events` contient **tous** les événements du stat ticker reçus pour le joueur depuis le début du match, y compris des noms qui n'étaient pas dans l'ancienne liste fixe (`Goal`, `Shot`, `Save`, `Assist`…). Un événement absent vaut 0.
 
+### `spectator` (nouveau)
+Le joueur que suit la caméra spectateur. Le message n'est envoyé que lorsque la cible ou le mode de caméra change.
+```json
+{ "topic": "spectator", "payload": {
+  "camera": "<mode de caméra du jeu>",
+  "target": { "uid": "Steam|76561198000000000|0", "name": "Player1", "bot": false, "teamIndex": 0 }
+} }
+```
+- `target` vaut **`null`** quand la caméra ne suit aucun joueur (caméra libre, caméra sur la balle…). C'est le signal pour **cacher** l'overlay du joueur regardé.
+- Le payload entier vaut `null` quand il n'y a pas de match.
+- `camera` est le nom brut du mode de caméra renvoyé par le jeu. Ses valeurs exactes n'ont pas encore été relevées en jeu : **ne base pas l'affichage dessus**, utilise `target`. Tu peux le logger pour aider à documenter ses valeurs.
+- Pour afficher les stats du joueur regardé, croise `target` avec le `scoreboard` via la clé `"<uid>|<name>"`.
+- Ajoute un léger délai (~150 ms) avant de cacher l'overlay, pour éviter un clignotement si le jeu passe brièvement par `null` en changeant de joueur.
+
 ### `players`
 ```json
 { "topic": "players", "payload": [
@@ -130,7 +145,7 @@ Format : `{ "command": "<nom>", "payload": { ... }, "id": "<optionnel, chaîne o
 | Commande | Payload | Effet |
 |---|---|---|
 | `ping` | | Vérifier que le plugin répond |
-| `resync` | | Renvoyer `match`, `scoreboard`, `players` et `entities` |
+| `resync` | | Renvoyer `match`, `scoreboard`, `spectator`, `players` et `entities` |
 | `spectate` | | Passer en spectateur |
 | `ready` | | Se marquer prêt |
 | `hide_hud` | | Masquer le HUD spectateur |
@@ -146,9 +161,10 @@ Une idée de fonctionnalité si RLTM a une interface de régie : boutons « cam�
 1. Adapter la réception des messages : nouveau topic `scoreboard`, objet `events`, renommage `hasFlip`, vérification du topic `plugin`.
 2. Vider l'état local quand un payload d'état vaut `null` (fin de match).
 3. Adapter les overlays et calculs de stats (tournois) qui lisaient `match.statistics` ou les compteurs à plat. Un compteur absent vaut 0.
-4. Utiliser `entities.time` pour l'interpolation là où des positions sont affichées (minimap, etc.).
-5. Activer `perMessageDeflate` sur le serveur WebSocket si ce n'est pas le cas.
-6. Optionnel : envoyer des commandes et gérer les réponses.
-7. Mettre à jour les types, les tests et la documentation de RLTM. Si RLTM a des tests, ajoute des fixtures construites à partir des exemples ci-dessus.
+4. Créer (ou adapter) un overlay « joueur regardé » piloté par le topic `spectator` : afficher les stats du `target` (depuis `scoreboard`), et le cacher quand `target` vaut `null`.
+5. Utiliser `entities.time` pour l'interpolation là où des positions sont affichées (minimap, etc.).
+6. Activer `perMessageDeflate` sur le serveur WebSocket si ce n'est pas le cas.
+7. Optionnel : envoyer des commandes et gérer les réponses.
+8. Mettre à jour les types, les tests et la documentation de RLTM. Si RLTM a des tests, ajoute des fixtures construites à partir des exemples ci-dessus.
 
 À la fin, résume les fichiers modifiés, ce qui a été testé, et tout point du protocole qui t'a semblé ambigu ou manquant : il pourra être corrigé côté plugin.
