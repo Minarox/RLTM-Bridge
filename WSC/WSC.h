@@ -3,8 +3,11 @@
 #pragma comment (lib, "ws2_32.lib")
 #pragma comment (lib, "crypt32.lib")
 
-#include <thread>
+#include <array>
+#include <atomic>
 #include <chrono>
+#include <map>
+#include <mutex>
 #include <ixwebsocket/IXNetSystem.h>
 #include <ixwebsocket/IXWebSocket.h>
 #include <nlohmann/json.hpp>
@@ -19,81 +22,125 @@
 #include "version.h"
 
 using json = nlohmann::json;
-using namespace std;
 
 constexpr auto plugin_version = stringify(VERSION_MAJOR) "." stringify(VERSION_MINOR) "." stringify(VERSION_PATCH) "." stringify(VERSION_BUILD);
 
-// enum Event
-// {
-// 	MATCH,
-// 	STATISTIC,
-// 	ENTITIES,
-// 	PLAYERS
-// };
+// Names of the plugin cvars, shared by the logic and the settings window
+namespace Cvars
+{
+	// WebSocket
+	inline constexpr const char* Url = "wsc_url";
+	inline constexpr const char* AutoConnect = "wsc_auto_connect";
+	inline constexpr const char* AutoReconnect = "wsc_auto_reconnect";
+	inline constexpr const char* HandshakeTimeout = "wsc_handshake_timeout";
+	inline constexpr const char* MinWaitBetweenRetries = "wsc_min_wait_between_retries";
+	inline constexpr const char* MaxWaitBetweenRetries = "wsc_max_wait_between_retries";
+	inline constexpr const char* PerMessageDeflate = "wsc_per_message_deflate";
+	inline constexpr const char* PingInterval = "wsc_ping_interval";
 
-// map<Event, string> eventToTopic = {
-// 	{ MATCH, "match" },
-// 	{ STATISTIC, "statistic" },
-// 	{ ENTITIES, "entities" },
-// 	{ PLAYERS, "players" }
-// };
+	// Game
+	inline constexpr const char* EntitiesInterval = "wsc_entities_interval";
+	inline constexpr const char* AutoSaveReplays = "wsc_auto_save_replays";
+	inline constexpr const char* AutoSpectate = "wsc_auto_spectate";
+	inline constexpr const char* AutoReady = "wsc_auto_ready";
+	inline constexpr const char* HideHud = "wsc_hide_hud";
+	inline constexpr const char* HideStatGraphs = "wsc_hide_stat_graphs";
+}
 
-// struct StatTickerParams
-// {
-// 	uintptr_t Receiver;
-// 	uintptr_t Victim;
-// 	uintptr_t StatEvent;
-// };
-
-// struct StatEventParams
-// {
-// 	uintptr_t PRI;
-// 	uintptr_t StatEvent;
-// };
+// Topics of the messages sent to the server: { "topic": "<topic>", "payload": <data> }
+enum class Topic
+{
+	Match,
+	Statistic,
+	Entities,
+	Players
+};
 
 class WSC: public BakkesMod::Plugin::BakkesModPlugin, public SettingsWindowBase
 {
-	// Boilerplate
+public:
+	// Boilerplate (WSC.cpp)
 	void onLoad() override;
 	void onUnload() override;
 
-	// Window settings
+	// Settings window (Settings/SettingsWindow.cpp)
 	void RenderSettings() override;
 
-	// Cvars, notifiers and events
-	void registerCvars();
-	void registerNotifiers();
-	void registerEvents();
-	void unregisterEvents();
+private:
+	// Hooks (WSC.cpp)
+	struct HookedEvent
+	{
+		std::string name;
+		bool post;
+	};
+	std::vector<HookedEvent> hookedEvents;
+	void HookEvents();
+	void UnhookEvents();
+	void Hook(const std::string& eventName, std::function<void()> callback, bool post = false);
 
-	// WebSocket
+	// Cvars and notifiers (Settings/Cvars.cpp)
+	std::shared_ptr<PersistentStorage> persistentStorage;
+	void RegisterCvars();
+	void RegisterNotifiers();
+	CVarWrapper GetCvar(const char* name);
+	bool IsCvarEnabled(const char* name);
+	void SetCvarFromUI(const char* name, const std::string& value);
+
+	// Settings window (Settings/SettingsWindow.cpp)
+	std::array<char, 512> urlInput{};
+	bool urlInputActive = false;
+	void RenderConnection();
+	void RenderWebSocketSettings();
+	void RenderGameSettings();
+	void RenderCvarCheckbox(const char* label, const char* cvarName, const char* tooltip);
+	void RenderCvarInputInt(const char* label, const char* cvarName, const char* tooltip);
+
+	// WebSocket (WebSocket/WebSocket.cpp)
 	ix::WebSocket socket;
-	json dataBuffer;
-	void setWSCallbacks();
+	std::atomic<bool> socketRunning = false; // true between Connect() and Disconnect(), even while reconnecting
+	std::mutex sentCacheMutex;
+	json sentCache = json::object(); // Last payload sent per topic, used to skip duplicates and to resync the server on (re)connection
+	std::mutex socketStatusMutex;
+	std::string socketLastError;
+	std::chrono::system_clock::time_point socketStatusSince = std::chrono::system_clock::now();
+	void InitSocket();
+	void ConfigureSocket();
+	void Connect();
+	void Disconnect();
+	void Send(Topic topic, const json& payload);
+	void SetSocketStatus(const std::string& error = "");
 
-	// Game data
-	// string tickBuffer = "";
-	// bool isReplay = false;
-	// bool threadRunning = false;
-	// json entitiesData = json::object();
-	// ServerWrapper GetServerWrapper();
-	// void SetReplayState(bool state, string caller);
-	// void GetMatchData(string caller);
-	// json GetScore(ServerWrapper server);
-	// json GetStatistics(ServerWrapper server);
-	// void GetPlayerStatData(ServerWrapper _server, void* params);
-	// void GetEntitiesData();
-	// void SendEntitiesData();
-	// void GetPlayersData(ServerWrapper server);
-	// void ResetDatas();
+	// Game data (Game/GameData.cpp)
+	struct MatchState
+	{
+		bool started = false;
+		bool paused = false;
+		bool ended = false;
+		bool replay = false;
+		json clock = 0;
+		std::string lastStatTick;
+		std::map<std::string, std::map<std::string, int>> statEvents; // "<uid>|<name>" -> stat event name -> count
+	};
+	MatchState match;
+	std::chrono::steady_clock::time_point lastEntitiesUpdate;
+	ServerWrapper GetServerWrapper();
+	bool IsMatchLive() const;
+	void UpdateMatch(bool countdownStarted = false);
+	void SetReplayState(bool replay);
+	json GetScore(ServerWrapper server);
+	json GetStatistics(ServerWrapper server);
+	void OnStatTicker(void* params);
+	void OnTick();
+	void SendEntities(ServerWrapper server);
+	void SendPlayers(ServerWrapper server);
+	void ResetMatch();
 
-	// Game Replays
-	// bool autoSaveReplay = false;
-	// void SetReplayAutoSave(bool status);
-
-	// Game HUD
-	// void SetSpectatorUI(int sleep);
-	// void SetStatGraph();
-	// void SetReady();
-	// void SetSpectator();
+	// Game actions (Game/GameActions.cpp)
+	std::string initialAutoSaveReplay; // value of "ranked_autosavereplay_all" before the plugin changed it
+	void ApplyAutoSaveReplays();
+	void RestoreAutoSaveReplays();
+	void HideSpectatorHud(int delay);
+	void HideStatGraphs();
+	void ReadyUp();
+	void JoinSpectators();
 };

@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Settings">
+      <UniqueIdentifier>{8b1f6a52-3c1e-4d0a-9f3e-2a7c5d9e1b01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\WebSocket">
+      <UniqueIdentifier>{8b1f6a52-3c1e-4d0a-9f3e-2a7c5d9e1b02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Game">
+      <UniqueIdentifier>{8b1f6a52-3c1e-4d0a-9f3e-2a7c5d9e1b03}</UniqueIdentifier>
+    </Filter>
     <Filter Include="imgui">
       <UniqueIdentifier>{396e4dda-4fe2-4588-9756-a364a57aa8c1}</UniqueIdentifier>
     </Filter>
@@ -27,15 +36,30 @@
     <ClCompile Include="WSC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="GuiBase.cpp">
-	  <Filter>Source Files</Filter>
-	</ClCompile>
+    <ClCompile Include="GuiBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Settings\Cvars.cpp">
+      <Filter>Source Files\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="Settings\SettingsWindow.cpp">
+      <Filter>Source Files\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="WebSocket\WebSocket.cpp">
+      <Filter>Source Files\WebSocket</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameData.cpp">
+      <Filter>Source Files\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameActions.cpp">
+      <Filter>Source Files\Game</Filter>
+    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="PersistentStorage.cpp">
-		<Filter>Source Files</Filter>
-	</ClCompile>
+    <ClCompile Include="PersistentStorage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="imgui\imgui.cpp">
       <Filter>imgui\implementation</Filter>
     </ClCompile>
@@ -83,12 +107,12 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-	<ClInclude Include="GuiBase.h">
-	  <Filter>Header Files</Filter>
-	</ClInclude>
-	<ClInclude Include="PersistentStorage.h">
-		<Filter>Header Files</Filter>
-	</ClInclude>
+    <ClInclude Include="GuiBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PersistentStorage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="imgui\imgui_rangeslider.h">
       <Filter>imgui\headers</Filter>
     </ClInclude>
