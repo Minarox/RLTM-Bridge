@@ -12,7 +12,7 @@ Les réglages sont enregistrés dans `bakkesmod/cfg/rltm_bridge.cfg`, et peuvent
 | **Status** | Messages et kilo-octets envoyés, bouton *Resend the state*, commandes reçues et la dernière, nom du prochain replay |
 | **Data sent to the server** | Données des balles et des voitures et leur intervalle d'envoi, statistiques avancées, joueur suivi par la caméra |
 | **Spectator** | Rejoindre les spectateurs, masquer le HUD (et les éléments gardés), masquer les graphes de statistiques |
-| **End of the match** | Se marquer prêt, sauvegarder le replay, format du nom du replay avec un aperçu |
+| **End of the match** | Se marquer prêt, sauvegarder le replay, format du nom du replay avec un aperçu, envoyer le replay au serveur |
 | **Server control** | Commandes autorisées au serveur, par groupe |
 | **Monitor** | Moniteur local pour la [page du moniteur](monitor.md), son port et son état, bouton pour ouvrir la page |
 | **Advanced WebSocket settings** | Reconnexion, compression, délais, mode debug |
@@ -61,6 +61,8 @@ Le [match](protocol/messages.md#match), le [tableau des scores](protocol/message
 |---|---|---|
 | `rltm_auto_ready` | `1` | Se marquer prêt à la fin du match |
 | `rltm_auto_save_replays` | `1` | Sauvegarder le replay de chaque match. La valeur précédente du réglage de BakkesMod est restaurée au déchargement du plugin. |
+| `rltm_upload_replays` | `1` | Envoyer le replay de chaque match au serveur une fois sauvegardé par le jeu (voir [Replays](protocol/index.md#replays)). Nécessite `rltm_auto_save_replays`. Matchs en ligne seulement. |
+| `rltm_replays_folder` | | Dossier où le jeu sauvegarde les replays. Vide : `Documents\My Games\Rocket League\TAGame\Demos`. |
 | `rltm_replay_name_format` | `{blue} vs {orange} - Match {game}` | Nom du replay quand le serveur envoie les équipes du match avec [`set_replay_name`](protocol/commands.md#set_replay_name) : `{blue}`, `{orange}` et `{game}` sont remplacés par l'équipe bleue, l'équipe orange et le numéro de la partie dans la série |
 
 ## Contrôle par le serveur {#server-control}

@@ -69,6 +69,27 @@ Un joueur est identifié dans chaque topic par les mêmes champs :
 
 La **clé d'un joueur**, utilisée par les topics indexés par joueur (`scoreboard`, `stats`), est `"<uid>|<name>"` : le nom est nécessaire pour distinguer les bots.
 
+## Replays {#replays}
+
+À la fin de chaque match en ligne, le plugin envoie le replay du match au serveur, en **HTTP** (le WebSocket reste réservé aux données en direct). Le plugin attend le fichier sauvegardé par le jeu (jusqu'à 3 minutes), puis envoie :
+
+```http
+PUT /api/replays/<guid du match>?token=<token de l'URL> HTTP/1.1
+Host: <hôte et port de l'URL WebSocket>
+Content-Type: application/octet-stream
+X-RLTM-Client: PC-CASTER-1
+Authorization: Bearer <token>
+
+<contenu du fichier .replay>
+```
+
+- L'URL est construite à partir de l'URL WebSocket : même hôte et même port, `http://` pour `ws://` et `https://` pour `wss://`, et seul le paramètre `token` de l'URL est gardé. `Authorization` n'est envoyé que si un token est réglé dans le plugin.
+- `<guid du match>` est le [`guid`](messages.md#match) du match : lettres, chiffres et tirets. Un match sans guid (match hors ligne) n'a pas de replay.
+- Le corps est le fichier `.replay` tel que sauvegardé par le jeu (généralement 1 à 3 Mo, 32 Mo au maximum).
+- Une réponse `200` ou `201` signifie que le replay est reçu. Sans réponse, ou avec `408`, `429` ou `5xx`, le plugin réessaie 3 fois (après 5 s, 15 s et 60 s). Les autres codes ne sont pas réessayés.
+- Le replay peut arriver avant ou après le [`result`](messages.md#result) du match : reliez-les avec le guid.
+- L'envoi peut être désactivé dans le plugin (`rltm_upload_replays`), et le replay n'est sauvegardé par le jeu que si `rltm_auto_save_replays` est activé.
+
 ## Unités {#units}
 
 | Donnée | Unité |

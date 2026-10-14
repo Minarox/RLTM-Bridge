@@ -92,6 +92,7 @@ Associez les réponses grâce à l'`id` dans le topic [`response`](protocol/mess
 - [ ] Interpoler les positions des [`entities`](protocol/messages.md#entities) avec leur `time`, sans supposer un intervalle fixe.
 - [ ] Utiliser l'en-tête `X-RLTM-Client` (ou `plugin.client`) pour distinguer les ordinateurs quand plusieurs matchs se jouent en même temps.
 - [ ] Gérer les [réponses](protocol/messages.md#response) `success: false` : une commande peut être désactivée par l'utilisateur du plugin.
+- [ ] Pour garder les replays, accepter `PUT /api/replays/<guid>` sur le même hôte (voir [Replays](protocol/index.md#replays)), et répondre `201`.
 - [ ] Ignorer les topics et les champs inconnus : de nouveaux peuvent être ajoutés sans changer la version du protocole.
 - [ ] N'envoyer au plugin que des [commandes](protocol/commands.md) : tout autre message reçoit une erreur en réponse.
 

@@ -6,13 +6,17 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <deque>
+#include <filesystem>
 #include <map>
 #include <mutex>
+#include <ixwebsocket/IXHttpClient.h>
 #include <ixwebsocket/IXNetSystem.h>
 #include <ixwebsocket/IXWebSocket.h>
 #include <ixwebsocket/IXWebSocketServer.h>
 #include <set>
+#include <thread>
 #include <nlohmann/json.hpp>
 
 #include "bakkesmod/plugin/bakkesmodplugin.h"
@@ -76,6 +80,8 @@ namespace Cvars
 	inline constexpr const char* AutoReady = "rltm_auto_ready";
 	inline constexpr const char* AutoSaveReplays = "rltm_auto_save_replays";
 	inline constexpr const char* ReplayNameFormat = "rltm_replay_name_format";
+	inline constexpr const char* UploadReplays = "rltm_upload_replays";
+	inline constexpr const char* ReplaysFolder = "rltm_replays_folder";
 
 	// Every cvar of the plugin (reset to the default values)
 	inline constexpr const char* All[] = {
@@ -84,7 +90,7 @@ namespace Cvars
 		ServerControl, ServerAllowCamera, ServerAllowActions, ServerAllowReplayName, ServerAllowSettings,
 		SendEntities, EntitiesInterval, SendSpectator, SendStats,
 		AutoSpectate, HideHud, HudNames, HudMatchInfo, HideStatGraphs,
-		AutoReady, AutoSaveReplays, ReplayNameFormat
+		AutoReady, AutoSaveReplays, ReplayNameFormat, UploadReplays, ReplaysFolder
 	};
 }
 
@@ -150,6 +156,7 @@ private:
 	TextInput clientNameInput;
 	TextInput tokenInput;
 	TextInput replayNameFormatInput;
+	TextInput replaysFolderInput;
 	IntInput entitiesIntervalInput;
 	void RenderConnection();
 	void RenderStatus();
@@ -200,6 +207,37 @@ private:
 	void SendStateToMonitorClient(ix::WebSocket& client);
 	size_t GetMonitorClientsCount();
 	std::string GetMonitorError();
+
+	// Replays sent to the server at the end of each match (WebSocket/ReplayUpload.cpp).
+	// The file is waited for and sent by a worker thread: it never touches the game, only the file and the network.
+	struct ReplayUpload
+	{
+		std::string guid; // Guid of the match, name of the replay on the server
+		std::string replayId; // Name of the file saved by the game, empty if unknown
+		std::filesystem::path folder; // Folder of the replays of the game
+		std::filesystem::file_time_type matchEnd; // Without replay id, the newest replay saved after the end of the match
+		std::string url;
+		std::string token; // Sent in the Authorization header when set in the plugin
+		std::string clientName;
+	};
+	std::thread uploadThread;
+	std::mutex uploadMutex;
+	std::condition_variable uploadCondition;
+	std::deque<ReplayUpload> uploadQueue;
+	bool uploadStopping = false;
+	ix::HttpRequestArgsPtr uploadRequest; // Request being sent, cancelled when the plugin is unloaded
+	std::mutex uploadStatusMutex;
+	std::string uploadStatus; // Result of the last replay sent, shown in the settings window
+	void StartReplayUploader();
+	void StopReplayUploader();
+	void QueueReplayUpload(ServerWrapper server);
+	void RunReplayUploader();
+	bool WaitForUploader(std::chrono::milliseconds duration);
+	std::filesystem::path FindReplayFile(const ReplayUpload& upload);
+	bool UploadReplay(const ReplayUpload& upload, const std::filesystem::path& file, bool& retry);
+	std::filesystem::path GetReplaysFolder();
+	void SetUploadStatus(const std::string& status);
+	std::string GetUploadStatus();
 
 	// Server commands (WebSocket/ServerCommands.cpp)
 	using ServerCommand = Protocol::Command;
@@ -266,6 +304,7 @@ private:
 		bool inPlay = false; // Between the first touch after a kickoff and the next goal
 		bool resultPending = false; // The match is ended, the result is sent after its last goal
 		bool resultSent = false;
+		bool replayQueued = false; // The replay of the match is waited for, to be sent to the server
 		json clock = 0;
 		std::string replayName; // Name given to the replay of this match
 		std::string lastStatTick;

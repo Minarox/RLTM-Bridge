@@ -57,6 +57,9 @@
     <ClCompile Include="WebSocket\Monitor.cpp">
       <Filter>Source Files\WebSocket</Filter>
     </ClCompile>
+    <ClCompile Include="WebSocket\ReplayUpload.cpp">
+      <Filter>Source Files\WebSocket</Filter>
+    </ClCompile>
     <ClCompile Include="Protocol\Protocol.cpp">
       <Filter>Source Files\Protocol</Filter>
     </ClCompile>

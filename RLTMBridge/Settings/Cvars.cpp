@@ -85,6 +85,8 @@ void RLTMBridge::RegisterCvars()
 	persistentStorage->RegisterPersistentCvar(Cvars::AutoSaveReplays, "1", "Save the replay at the end of the match", true, true, 0, true, 1)
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) { ApplyAutoSaveReplays(); });
 	persistentStorage->RegisterPersistentCvar(Cvars::ReplayNameFormat, "{blue} vs {orange} - Match {game}", "Name of the replays sent by the server, with {blue}, {orange} and {game}");
+	persistentStorage->RegisterPersistentCvar(Cvars::UploadReplays, "1", "Send the replay of each match to the server", true, true, 0, true, 1);
+	persistentStorage->RegisterPersistentCvar(Cvars::ReplaysFolder, "", "Folder of the replays of the game (Documents\\My Games\\Rocket League\\TAGame\\Demos if empty)");
 }
 
 CVarWrapper RLTMBridge::GetCvar(const char* name)

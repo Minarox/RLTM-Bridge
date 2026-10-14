@@ -22,6 +22,7 @@ Le plugin est renommé **RLTM Bridge** (anciennement WSC, WebSocket Controller).
 - [Commandes](protocol/commands.md) du serveur, avec des messages [`response`](protocol/messages.md#response) : caméra, noms des replays, actions du joueur, réglages.
 - Identification des clients : en-têtes `X-RLTM-Client` et `Authorization`.
 - Fenêtre de réglages organisée par fonctionnalité, mode debug, réglages pour chaque action automatique.
+- [Replays](protocol/index.md#replays) : le replay de chaque match est envoyé au serveur en HTTP une fois sauvegardé par le jeu, avec de nouvelles tentatives en cas d'échec.
 - [Moniteur](monitor.md) : serveur WebSocket local du plugin et page web affichant ses messages et envoyant des commandes, sans serveur.
 
 ### Corrections {#fixes}

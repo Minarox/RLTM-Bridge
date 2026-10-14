@@ -200,4 +200,62 @@ namespace Protocol
 
 		return fmt::format("#{:02X}{:02X}{:02X}", component(r), component(g), component(b));
 	}
+
+	bool IsValidMatchGuid(const std::string& guid)
+	{
+		if (guid.empty() || guid.size() > 64) return false;
+
+		for (const char c : guid)
+		{
+			if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-')) return false;
+		}
+
+		return true;
+	}
+
+	std::string GetReplayUploadUrl(const std::string& webSocketUrl, const std::string& guid)
+	{
+		if (!IsValidMatchGuid(guid)) return "";
+
+		std::string scheme;
+		std::string rest;
+		if (webSocketUrl.rfind("ws://", 0) == 0)
+		{
+			scheme = "http://";
+			rest = webSocketUrl.substr(5);
+		}
+		else if (webSocketUrl.rfind("wss://", 0) == 0)
+		{
+			scheme = "https://";
+			rest = webSocketUrl.substr(6);
+		}
+		else return "";
+
+		// Host and port: up to the path, the query or the fragment
+		const size_t hostEnd = rest.find_first_of("/?#");
+		const std::string host = rest.substr(0, hostEnd);
+		if (host.empty() || host.find_first_of(" \t\r\n@") != std::string::npos) return "";
+
+		// Token of the query, kept as is (already encoded in the URL)
+		std::string token;
+		const size_t queryStart = rest.find('?');
+		if (queryStart != std::string::npos)
+		{
+			const size_t queryEnd = rest.find('#', queryStart);
+			const std::string query = rest.substr(queryStart + 1, queryEnd == std::string::npos ? std::string::npos : queryEnd - queryStart - 1);
+
+			size_t start = 0;
+			while (start <= query.size())
+			{
+				const size_t end = std::min(query.find('&', start), query.size());
+				const std::string parameter = query.substr(start, end - start);
+				if (parameter.rfind("token=", 0) == 0) token = parameter.substr(6);
+				start = end + 1;
+			}
+		}
+
+		std::string url = scheme + host + "/api/replays/" + guid;
+		if (!token.empty()) url += "?token=" + token;
+		return url;
+	}
 }

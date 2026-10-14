@@ -92,6 +92,7 @@ Match the answers with the `id` in the [`response`](protocol/messages.md#respons
 - [ ] Interpolate the positions of the [`entities`](protocol/messages.md#entities) with their `time`, don't assume a fixed interval.
 - [ ] Use the `X-RLTM-Client` header (or `plugin.client`) to tell the computers apart when several matches are played at the same time.
 - [ ] Handle the `success: false` [responses](protocol/messages.md#response): a command can be disabled by the user of the plugin.
+- [ ] To keep the replays, accept `PUT /api/replays/<guid>` on the same host (see [Replays](protocol/index.md#replays)), and answer `201`.
 - [ ] Ignore the unknown topics and fields: new ones can be added without changing the protocol version.
 - [ ] Don't send anything else than [commands](protocol/commands.md) to the plugin: any other message is answered with an error.
 

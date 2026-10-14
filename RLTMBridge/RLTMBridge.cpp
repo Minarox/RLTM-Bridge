@@ -20,6 +20,7 @@ void RLTMBridge::onLoad()
 	RegisterNotifiers();
 	RegisterServerCommands();
 	InitSocket();
+	StartReplayUploader();
 	HookEvents();
 
 	ApplyAutoSaveReplays();
@@ -46,6 +47,7 @@ void RLTMBridge::onUnload()
 	ResetMatch();
 	Disconnect();
 	StopMonitor();
+	StopReplayUploader();
 
 	RestoreAutoSaveReplays();
 
@@ -84,6 +86,9 @@ void RLTMBridge::HookEvents()
 		// Last chance before the replay is saved, the name is only for this match
 		if (ApplyReplayName()) match.replayName = GetReplayName();
 		SetReplayName("");
+
+		// Sent to the server once the game has saved it (WebSocket/ReplayUpload.cpp)
+		QueueReplayUpload(GetServerWrapper());
 
 		match.inPlay = false;
 		match.resultPending = true; // Sent on the next tick, after the last goal (Game/GameEvents.cpp)

@@ -12,7 +12,7 @@ The settings are saved in `bakkesmod/cfg/rltm_bridge.cfg`, and can be reset to t
 | **Status** | Messages and kilobytes sent, *Resend the state* button, commands received and the last one, name of the next replay |
 | **Data sent to the server** | Balls and cars data and their update interval, advanced statistics, player followed by the camera |
 | **Spectator** | Join the spectators, hide the HUD (and the elements kept), hide the statistics graphs |
-| **End of the match** | Mark as ready, save the replay, replay name format with a preview |
+| **End of the match** | Mark as ready, save the replay, replay name format with a preview, send the replay to the server |
 | **Server control** | Commands allowed to the server, by group |
 | **Monitor** | Local monitor for the [monitor page](monitor.md), its port and state, button to open the page |
 | **Advanced WebSocket settings** | Reconnection, compression, timeouts, debug mode |
@@ -61,6 +61,8 @@ The [match](protocol/messages.md#match), [scoreboard](protocol/messages.md#score
 |---|---|---|
 | `rltm_auto_ready` | `1` | Mark as ready at the end of the match |
 | `rltm_auto_save_replays` | `1` | Save the replay of every match. The previous value of the BakkesMod setting is restored when the plugin is unloaded. |
+| `rltm_upload_replays` | `1` | Send the replay of each match to the server once the game has saved it (see [Replays](protocol/index.md#replays)). Requires `rltm_auto_save_replays`. Online matches only. |
+| `rltm_replays_folder` | | Folder where the game saves the replays. Empty: `Documents\My Games\Rocket League\TAGame\Demos`. |
 | `rltm_replay_name_format` | `{blue} vs {orange} - Match {game}` | Name of the replay when the server sends the teams of the match with [`set_replay_name`](protocol/commands.md#set_replay_name): `{blue}`, `{orange}` and `{game}` are replaced by the blue team, the orange team and the game number of the series |
 
 ## Server control

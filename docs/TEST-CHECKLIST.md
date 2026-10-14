@@ -115,6 +115,18 @@ Le plugin suppose que le jeu envoie **deux fois** chaque événement de stat («
 - [ ] **Mark as ready** : à la fin du match, le plugin se marque prêt automatiquement.
 - [ ] **Save the replay** : le replay est sauvegardé automatiquement à la fin de chaque match. Au déchargement du plugin (`plugin unload rltmbridge`), `ranked_autosavereplay_all` reprend sa valeur d'avant.
 
+## 10 bis. Envoi des replays ⚠️
+
+Avec RLTM (branche `feat/monorepo-slots`) et le token d'un slot, en partie privée en ligne (une partie hors ligne n'a pas de guid) :
+
+- [ ] À la fin du match, la fenêtre affiche *Waiting for the replay of the match*, puis *Replay of the last match sent (x MB)*.
+- [ ] Le fichier est trouvé dans `Documents\My Games\Rocket League\TAGame\Demos` ⚠️ (noter le nom du fichier : est-ce l'id du replay ?). Si le dossier est ailleurs (OneDrive, version Epic…), le régler dans *Replays folder*.
+- [ ] Le jeu ne ralentit pas pendant l'envoi (il se fait dans un thread à part).
+- [ ] Côté RLTM : le fichier est dans `apps/realtime/replays/<guid>.replay`, et se télécharge depuis `/<tournoi>/matches/<guid>/replay` une fois le résultat enregistré. Il s'ouvre dans Rocket League.
+- [ ] RLTM arrêté pendant la fin du match : *Replay not sent: … (retrying)*, puis envoyé si RLTM redémarre dans la minute.
+- [ ] Mauvais token : *Replay not sent: 401 UNAUTHORIZED*, sans nouvelle tentative.
+- [ ] Décharger le plugin pendant l'attente du fichier (`plugin unload rltmbridge`) : le jeu ne se bloque pas.
+
 ## 11. Nom des replays ⚠️
 
 - [ ] Pendant un match : `replay Équipe_1 Équipe_2 3` dans le serveur de test → réponse `success: true`, `result.name: "Équipe 1 vs Équipe 2 - Match 3"`, `applied: true`. La fenêtre affiche *Next replay name*.

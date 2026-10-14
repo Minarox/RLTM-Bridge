@@ -74,6 +74,17 @@ namespace Protocol
 	// 127.0.0.1 or a file) or no Origin (not a browser). Any other website open in the browser is rejected.
 	bool IsAllowedMonitorOrigin(const std::string& origin);
 
+	// Largest replay file sent to the server (a match is usually 1 to 3 MB)
+	constexpr size_t MAX_REPLAY_FILE_SIZE = 32 * 1024 * 1024;
+
+	// Guid of a match of the game, used as the name of its replay on the server: letters, digits and dashes
+	bool IsValidMatchGuid(const std::string& guid);
+
+	// HTTP URL where the replay of a match is sent, from the WebSocket URL of the server: same host and port,
+	// http(s) instead of ws(s), path /api/replays/<guid>, and the token of the URL kept.
+	// Empty if the WebSocket URL or the guid is invalid.
+	std::string GetReplayUploadUrl(const std::string& webSocketUrl, const std::string& guid);
+
 	// "#RRGGBB" from color components between 0 and 1 (clamped)
 	std::string ToHexColor(float r, float g, float b);
 }

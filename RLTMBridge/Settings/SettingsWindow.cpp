@@ -188,6 +188,17 @@ void RLTMBridge::RenderMatchEndSettings()
 		RenderCvarInputText("Replay name", Cvars::ReplayNameFormat, replayNameFormatInput,
 			"Used when the server sends the teams of the match: {blue}, {orange} and {game} are replaced by the blue team, the orange team and the game number of the series");
 		ImGui::TextDisabled("Preview: %s", BuildReplayName("Blue Team", "Orange Team", 1).c_str());
+
+		if (RenderCvarCheckbox("Send the replay to the server", Cvars::UploadReplays,
+			"Send the replay of each match to the server once the game has saved it, to download it from the server. Online matches only (an offline match has no guid)"))
+		{
+			ImGui::Indent();
+			RenderCvarInputText("Replays folder", Cvars::ReplaysFolder, replaysFolderInput,
+				"Folder where the game saves the replays. Empty: Documents\\My Games\\Rocket League\\TAGame\\Demos");
+			const std::string status = GetUploadStatus();
+			if (!status.empty()) ImGui::TextDisabled("%s", status.c_str());
+			ImGui::Unindent();
+		}
 		ImGui::Unindent();
 	}
 }

@@ -132,6 +132,22 @@ namespace
 			Check(!IsAllowedMonitorOrigin(origin), std::string("rejected origin ") + origin);
 	}
 
+	void TestReplayUpload()
+	{
+		Check(IsValidMatchGuid("8A5B3C4D2E1F4A5B9C8D7E6F5A4B3C2D"), "valid guid");
+		for (const char* guid : { "", "../etc", "a.b", "a/b", "a b", "a%2Fb" })
+			Check(!IsValidMatchGuid(guid), std::string("invalid guid ") + guid);
+		Check(!IsValidMatchGuid(std::string(65, 'A')), "guid too long");
+
+		Check(GetReplayUploadUrl("ws://localhost:3300/?token=ABC", "G1") == "http://localhost:3300/api/replays/G1?token=ABC", "upload url with token");
+		Check(GetReplayUploadUrl("wss://rltm.example.com", "G1") == "https://rltm.example.com/api/replays/G1", "upload url over TLS");
+		Check(GetReplayUploadUrl("ws://10.0.0.2:3300/path?a=1&token=T%2B1&b=2#x", "G1") == "http://10.0.0.2:3300/api/replays/G1?token=T%2B1", "upload url keeps only the token");
+		Check(GetReplayUploadUrl("http://localhost:3300", "G1").empty(), "upload url needs a WebSocket URL");
+		Check(GetReplayUploadUrl("ws://user@evil.com/", "G1").empty(), "upload url without credentials");
+		Check(GetReplayUploadUrl("ws://localhost:3300", "../x").empty(), "upload url needs a valid guid");
+		Check(GetReplayUploadUrl("ws:///?token=A", "G1").empty(), "upload url needs a host");
+	}
+
 	void TestColors()
 	{
 		Check(ToHexColor(1.0f, 0.5f, 0.0f) == "#FF8000", "hex color");
@@ -148,6 +164,7 @@ int main()
 	TestMessages();
 	TestHeaders();
 	TestMonitorOrigins();
+	TestReplayUpload();
 	TestColors();
 
 	if (failures) std::cout << failures << " test(s) failed\n";
