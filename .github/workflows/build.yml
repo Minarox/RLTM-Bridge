@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install nlohmann/json
         run: sudo apt-get update && sudo apt-get install -y nlohmann-json3-dev
@@ -31,18 +31,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: plugin
 
       - name: Checkout BakkesModSDK
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: bakkesmodorg/BakkesModSDK
           path: bakkesmod\bakkesmodsdk
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       - name: Setup vcpkg
         run: |
@@ -50,7 +50,7 @@ jobs:
           & "$env:VCPKG_INSTALLATION_ROOT\vcpkg" integrate install
 
       - name: Cache vcpkg packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
           key: vcpkg-${{ hashFiles('plugin/vcpkg.json', 'plugin/vcpkg-configuration.json') }}
@@ -60,7 +60,7 @@ jobs:
         run: msbuild /m /p:Configuration=Release /p:Platform=x64 "/p:BakkesModPath=$env:GITHUB_WORKSPACE\bakkesmod" /p:Environment=GitHub plugin\RLTMBridge.sln
 
       - name: Upload plugin
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: RLTMBridge
           path: plugin\plugins\RLTMBridge.dll
@@ -76,11 +76,11 @@ jobs:
 
     steps:
       - name: Download plugin
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: RLTMBridge
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: RLTMBridge.dll
