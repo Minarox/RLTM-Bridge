@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    {
+      "$comment": "ssl: wss:// support, with mbedTLS and the root certificates of Windows",
+      "name": "ixwebsocket",
+      "features": [ "ssl" ]
+    },
+    "nlohmann-json"
+  ]
+}

@@ -1,0 +1,115 @@
+site_name: RLTM Bridge
+site_description: BakkesMod plugin connecting Rocket League to RLTM (Rocket League Tournament Manager), or any WebSocket server
+site_author: Mathis Serrieres Maniecki
+site_url: https://minarox.github.io/RLTM-Bridge/
+repo_url: https://github.com/Minarox/RLTM-Bridge
+repo_name: Minarox/RLTM-Bridge
+edit_uri: edit/dev/docs/
+copyright: Apache 2.0 © Mathis Serrieres Maniecki
+
+# Fail the build on a broken link or anchor (mkdocs build --strict)
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+# Internal documents of the repository, not part of the site
+exclude_docs: |
+  RLTM-MIGRATION.md
+  TEST-CHECKLIST.md
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Configuration: configuration.md
+  - Monitor: monitor.md
+  - Protocol:
+      - Overview: protocol/index.md
+      - Messages: protocol/messages.md
+      - Commands: protocol/commands.md
+  - Server integration: integration.md
+  - Development: development.md
+  - Changelog: changelog.md
+
+plugins:
+  - search
+  # One file per language: page.md (English) and page.fr.md (French)
+  - i18n:
+      docs_structure: suffix
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: fr
+          name: Français
+          build: true
+          site_description: Plugin BakkesMod reliant Rocket League à RLTM (Rocket League Tournament Manager), ou à n'importe quel serveur WebSocket
+          nav_translations:
+            Home: Accueil
+            Getting started: Démarrage
+            Configuration: Configuration
+            Monitor: Moniteur
+            Protocol: Protocole
+            Overview: Vue d'ensemble
+            Messages: Messages
+            Commands: Commandes
+            Server integration: Intégration serveur
+            Development: Développement
+            Changelog: Historique des versions
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: orange
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: orange
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.tabs.link
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra_css:
+  - stylesheets/monitor.css
+
+extra_javascript:
+  - javascripts/monitor.js

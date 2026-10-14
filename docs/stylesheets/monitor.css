@@ -1,0 +1,141 @@
+/* Monitor page (javascripts/monitor.js), using the colors of the Material theme (light and dark) */
+
+.rltm-monitor__toolbar,
+.rltm-monitor__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0.6rem 0;
+}
+
+.rltm-monitor__port,
+.rltm-monitor__input,
+.rltm-monitor__raw {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--md-default-fg-color--lighter);
+    border-radius: 0.2rem;
+    background: var(--md-default-bg-color);
+    color: var(--md-default-fg-color);
+    font: inherit;
+}
+
+.rltm-monitor__port { width: 6rem; }
+.rltm-monitor__game { width: 4.5rem; }
+.rltm-monitor__raw { width: 100%; font-family: var(--md-code-font-family); }
+
+.rltm-monitor .md-button {
+    padding: 0.3rem 0.9rem;
+    font-size: 0.7rem;
+}
+
+.rltm-monitor__status {
+    padding: 0.15rem 0.6rem;
+    border-radius: 1rem;
+    background: var(--md-default-fg-color--lightest);
+    font-weight: 700;
+}
+
+.rltm-monitor__status--ok { background: #2e7d32; color: #fff; }
+.rltm-monitor__status--pending { background: #f9a825; color: #000; }
+.rltm-monitor__status--error { background: #c62828; color: #fff; }
+
+.rltm-monitor__help { color: #c62828; }
+
+.rltm-monitor__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.6rem;
+    margin: 1rem 0;
+}
+
+.rltm-monitor__card,
+.rltm-monitor__panel {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 0.3rem;
+}
+
+.rltm-monitor__panel { margin: 1rem 0; }
+.rltm-monitor__panel h2 { margin: 0 0 0.4rem; }
+
+.rltm-monitor__label {
+    color: var(--md-default-fg-color--light);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+}
+
+.rltm-monitor__value { font-weight: 700; overflow-wrap: anywhere; }
+.rltm-monitor__flags { font-weight: 400; font-size: 0.65rem; color: var(--md-default-fg-color--light); }
+.rltm-monitor__blue { color: #1873ff; }
+.rltm-monitor__orange { color: #ff8a15; }
+
+.rltm-monitor__filters label { font-family: var(--md-code-font-family); font-size: 0.65rem; }
+
+.rltm-monitor__log {
+    max-height: 32rem;
+    overflow-y: auto;
+    font-family: var(--md-code-font-family);
+    font-size: 0.65rem;
+}
+
+.rltm-monitor__state,
+.rltm-monitor__entry {
+    border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.rltm-monitor__state summary,
+.rltm-monitor__entry summary {
+    cursor: pointer;
+    padding: 0.2rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rltm-monitor__time { color: var(--md-default-fg-color--light); margin-right: 0.5rem; }
+.rltm-monitor__direction { margin-right: 0.4rem; }
+.rltm-monitor__topic { font-weight: 700; margin-right: 0.5rem; }
+.rltm-monitor__preview { color: var(--md-default-fg-color--light); }
+
+.rltm-monitor__json {
+    max-height: 24rem;
+    overflow: auto;
+    margin: 0.2rem 0 0.6rem;
+    padding: 0.4rem;
+    background: var(--md-code-bg-color);
+    font-size: 0.65rem;
+}
+
+/* The theme styles every <details> as an admonition: plain lines for the states and the log */
+.md-typeset .rltm-monitor details {
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-bottom: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 0;
+    box-shadow: none;
+    background: none;
+    font-size: inherit;
+}
+
+.md-typeset .rltm-monitor details > summary {
+    margin: 0;
+    padding: 0.2rem 0 0.2rem 1rem;
+    border: none;
+    border-radius: 0;
+    background: none;
+    font-weight: 400;
+}
+
+.md-typeset .rltm-monitor details > summary::before { display: none; }
+
+.md-typeset .rltm-monitor details > summary::after {
+    top: 0.3rem;
+    left: 0;
+    right: auto;
+    width: 0.8rem;
+    height: 0.8rem;
+}
+
+.md-typeset .rltm-monitor details > :last-child { margin-bottom: 0.4rem; }

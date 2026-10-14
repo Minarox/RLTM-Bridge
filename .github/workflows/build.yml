@@ -1,0 +1,86 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, dev ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install nlohmann/json
+        run: sudo apt-get update && sudo apt-get install -y nlohmann-json3-dev
+
+      - name: Unit tests
+        run: sh tests/run.sh
+
+  build:
+    runs-on: windows-latest
+
+    env:
+      # Build number of the DLL version, written in version.h by update_version.ps1
+      RLTM_BRIDGE_BUILD_NUMBER: ${{ github.run_number }}
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-cache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: plugin
+
+      - name: Checkout BakkesModSDK
+        uses: actions/checkout@v7
+        with:
+          repository: bakkesmodorg/BakkesModSDK
+          path: bakkesmod\bakkesmodsdk
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Setup vcpkg
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+          & "$env:VCPKG_INSTALLATION_ROOT\vcpkg" integrate install
+
+      - name: Cache vcpkg packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ hashFiles('plugin/vcpkg.json', 'plugin/vcpkg-configuration.json') }}
+
+      - name: Build
+        # Environment=GitHub skips the BakkesMod patch post build step
+        run: msbuild /m /p:Configuration=Release /p:Platform=x64 "/p:BakkesModPath=$env:GITHUB_WORKSPACE\bakkesmod" /p:Environment=GitHub plugin\RLTMBridge.sln
+
+      - name: Upload plugin
+        uses: actions/upload-artifact@v7
+        with:
+          name: RLTMBridge
+          path: plugin\plugins\RLTMBridge.dll
+          if-no-files-found: error
+
+  release:
+    needs: [test, build]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download plugin
+        uses: actions/download-artifact@v8
+        with:
+          name: RLTMBridge
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: RLTMBridge.dll

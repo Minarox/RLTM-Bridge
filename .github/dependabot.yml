@@ -1,0 +1,30 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    labels:
+      - "dependencies"
+
+  # Baseline of the vcpkg registry (vcpkg-configuration.json)
+  - package-ecosystem: "vcpkg"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    labels:
+      - "dependencies"
+
+  # Documentation site (docs/requirements.txt)
+  - package-ecosystem: "pip"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    labels:
+      - "dependencies"

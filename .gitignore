@@ -1,5 +1,6 @@
-build*
+/build*/
 !source/libs/*
+vcpkg_installed/
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -262,6 +263,10 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
+# VCPKG
+vcpkg/
+vcpkg_installed/
+
 # Visual Studio 6 build log
 *.plg
 
@@ -339,3 +344,6 @@ MigrationBackup/
 *.exp
 plugins*
 !plugins/settings
+
+# Documentation built by MkDocs
+/site/
