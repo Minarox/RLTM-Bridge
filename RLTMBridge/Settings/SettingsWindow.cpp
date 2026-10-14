@@ -111,8 +111,11 @@ void RLTMBridge::RenderConnection()
 		since = std::chrono::system_clock::to_time_t(socketStatusSince);
 	}
 
+	std::tm sinceTime{};
+	localtime_s(&sinceTime, &since);
+
 	ImGui::SameLine();
-	ImGui::TextDisabled("since %s", fmt::format("{:%H:%M:%S}", fmt::localtime(since)).c_str());
+	ImGui::TextDisabled("since %s", fmt::format("{:%H:%M:%S}", sinceTime).c_str());
 
 	if (!lastError.empty() && state != ix::ReadyState::Open)
 		ImGui::TextColored(COLOR_RED, "Error: %s", lastError.c_str());
